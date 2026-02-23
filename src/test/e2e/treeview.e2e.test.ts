@@ -11,6 +11,7 @@ import {
   activateExtension,
   sleep,
   getCommandTreeProvider,
+  getLabelString,
 } from "../helpers/helpers";
 import type { CommandTreeItem } from "../../models/TaskItem";
 
@@ -97,6 +98,46 @@ suite("TreeView E2E Tests", () => {
         "file",
         "URI scheme should be 'file'",
       );
+    });
+  });
+
+  suite("Folder Hierarchy", () => {
+    test("folders must come before files in tree — normal file/folder rules", async function () {
+      this.timeout(15000);
+      const provider = getCommandTreeProvider();
+      const categories = await provider.getChildren();
+      const shellCategory = categories.find(
+        (c) => getLabelString(c.label).includes("Shell Scripts"),
+      );
+      assert.ok(
+        shellCategory !== undefined,
+        "Should find Shell Scripts category",
+      );
+
+      const topChildren = await provider.getChildren(shellCategory);
+      const mixedFolder = topChildren.find(
+        (c) =>
+          c.task === null &&
+          c.children.some((gc) => gc.task !== null) &&
+          c.children.some((gc) => gc.task === null),
+      );
+      assert.ok(
+        mixedFolder !== undefined,
+        "Should find a folder containing both files and subfolders",
+      );
+
+      const kids = mixedFolder.children;
+      let seenTask = false;
+      for (const child of kids) {
+        if (child.task !== null) {
+          seenTask = true;
+        } else {
+          assert.ok(
+            !seenTask,
+            "Folder node must not appear after a file node — folders come first",
+          );
+        }
+      }
     });
   });
 });
