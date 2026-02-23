@@ -36,7 +36,7 @@ function renderFolder({
         parentTreeId: folderId,
         sortTasks
     }));
-    return new CommandTreeItem(null, label, [...taskItems, ...subItems], parentTreeId);
+    return new CommandTreeItem(null, label, [...subItems, ...taskItems], parentTreeId);
 }
 
 /**
