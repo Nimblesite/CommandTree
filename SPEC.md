@@ -22,7 +22,6 @@
   - [Managing Tags](#managing-tags)
   - [Tag Filter](#tag-filter)
   - [Clear Filter](#clear-filter)
-- [RAG Search](#rag-search)
 - [Parameterized Commands](#parameterized-commands)
   - [Parameter Definition](#parameter-definition)
   - [Parameter Formats](#parameter-formats)
@@ -38,11 +37,9 @@
 - [Database Schema](#database-schema)
   - [Commands Table Columns](#commands-table-columns)
   - [Tags Table Columns](#tags-table-columns)
-- [AI Summaries and Semantic Search](#ai-summaries-and-semantic-search)
+- [AI Summaries](#ai-summaries)
   - [Automatic Processing Flow](#automatic-processing-flow)
   - [Summary Generation](#summary-generation)
-  - [Embedding Generation](#embedding-generation)
-  - [Search Implementation](#search-implementation)
   - [Verification](#verification)
 - [Command Skills](#command-skills) *(not yet implemented)*
   - [Skill File Format](#skill-file-format)
@@ -60,9 +57,9 @@ CommandTree scans a VS Code workspace and surfaces all runnable commands in a si
 
 The tree view is generated **directly from the file system** by parsing package.json, Makefiles, shell scripts, etc. All core functionality (running commands, tagging, filtering by tag) works without a database.
 
-The SQLite database **enriches** the tree with AI-generated summaries and embeddings:
-- **Database empty**: Tree displays all commands normally, no summaries shown, semantic search unavailable
-- **Database populated**: Summaries appear in tooltips + semantic search becomes available
+The SQLite database **enriches** the tree with AI-generated summaries:
+- **Database empty**: Tree displays all commands normally, no summaries shown
+- **Database populated**: Summaries appear in tooltips
 
 The `commands` table is a **cache/enrichment layer**, not the source of truth for what commands exist.
 
@@ -261,11 +258,6 @@ Remove all active filters via toolbar button or `commandtree.clearFilter` comman
 
 All tag assignments are stored in the SQLite database (`tags` master table + `command_tags` junction table).
 
-## RAG search
-**ragsearch**
-
-This searches through the records with a vector proximity search based on the embeddings. There is no text filtering function.
-
 ## Parameterized Commands
 **parameterized-commands**
 
@@ -399,26 +391,23 @@ All settings are configured via VS Code settings (`Cmd+,` / `Ctrl+,`).
 ## Database Schema
 **database-schema**
 
-Three tables store AI enrichment data, tag definitions, and tag assignments
+Three tables store AI summaries, tag definitions, and tag assignments
 
 ```sql
 -- COMMANDS TABLE
--- Stores AI-generated summaries and embeddings for discovered commands
+-- Stores AI-generated summaries for discovered commands
 -- NOTE: This is NOT the source of truth - commands are discovered from filesystem
--- This table only adds AI features (summaries, semantic search) to the tree view
+-- This table only adds AI features (summaries) to the tree view
 CREATE TABLE IF NOT EXISTS commands (
     command_id TEXT PRIMARY KEY,        -- Unique command identifier (e.g., "npm:/path/to/package.json:build")
     content_hash TEXT NOT NULL,         -- SHA-256 hash of command content for change detection
     summary TEXT NOT NULL,              -- AI-GENERATED SUMMARY: Plain-language description from GitHub Copilot (1-3 sentences)
                                         -- MUST be populated for EVERY command automatically in background
                                         -- Example: "Builds the TypeScript project and outputs to the dist directory"
-    embedding BLOB,                     -- EMBEDDING VECTOR: 384 Float32 values (1536 bytes) generated from the summary
-                                        -- MUST be populated by embedding the summary text using all-MiniLM-L6-v2
-                                        -- Required for semantic search to work
     security_warning TEXT,              -- SECURITY WARNING: AI-detected security risk description (nullable)
                                         -- Populated via VS Code Language Model Tool API (structured output)
                                         -- When non-empty, tree view shows ⚠️ icon next to command
-    last_updated TEXT NOT NULL          -- ISO 8601 timestamp of last summary/embedding generation
+    last_updated TEXT NOT NULL          -- ISO 8601 timestamp of last summary generation
 );
 
 -- TAGS TABLE
@@ -455,7 +444,7 @@ CRITICAL: No backwards compatibility. If the database structure is wrong, the ex
   - Without this pragma, FK constraints are SILENTLY IGNORED and orphaned records can be created
 - **Orphan Prevention**: `ensureCommandExists()` inserts placeholder command rows before adding tags
   - Called automatically by `addTagToCommand()` before creating junction records
-  - Placeholder rows have empty summary/content_hash and NULL embedding
+  - Placeholder rows have empty summary/content_hash
   - Ensures FK constraints are always satisfied - no orphaned tag assignments possible
 - **API**: Synchronous, no async overhead for reads
 - **Persistence**: Automatic file-based storage
@@ -470,16 +459,12 @@ CRITICAL: No backwards compatibility. If the database structure is wrong, the ex
   - **MUST be populated by GitHub Copilot** for every command
   - Example: "Builds the TypeScript project and outputs to the dist directory"
   - **If missing, the feature is BROKEN**
-- **`embedding`**: 384 Float32 values (1536 bytes total)
-  - **MUST be populated** by embedding the `summary` text using `all-MiniLM-L6-v2`
-  - Stored as BLOB containing serialized Float32Array
-  - **If missing or NULL, semantic search CANNOT work**
 - **`security_warning`**: AI-detected security risk description (TEXT, nullable)
   - Populated via VS Code Language Model Tool API (structured output from Copilot)
   - When non-empty, tree view shows ⚠️ icon next to the command label
   - Hovering shows the full warning text in the tooltip
   - Example: "Deletes build output files including node_modules without confirmation"
-- **`last_updated`**: ISO 8601 timestamp of last summary/embedding generation (NOT NULL)
+- **`last_updated`**: ISO 8601 timestamp of last summary generation (NOT NULL)
 
 ### Tags Table Columns
 **database-schema/tags-table**
@@ -510,20 +495,18 @@ Many-to-many relationship between commands and tags with STRICT referential inte
 
 --
 
-## AI Summaries and Semantic Search
-**ai-semantic-search**
+## AI Summaries
+**ai-summaries**
 
-CommandTree **enriches** the tree view with AI-generated summaries and enables semantic search. This is an **optional enhancement layer** - all core functionality (running commands, tagging, filtering) works without it.
+CommandTree **enriches** the tree view with AI-generated summaries. This is an **optional enhancement layer** - all core functionality (running commands, tagging, filtering) works without it.
 
 **What happens when database is populated:**
 - AI summaries appear in command tooltips
-- Semantic search (magnifying glass icon) becomes available
 - Background processing automatically keeps summaries up-to-date
 
 **What happens when database is empty:**
 - Tree view still displays all commands discovered from filesystem
 - Commands can still be run, tagged, and filtered by tag
-- Semantic search is unavailable (gracefully disabled)
 
 This is a **fully automated background process** that requires no user intervention once enabled.
 
@@ -535,16 +518,14 @@ This is a **fully automated background process** that requires no user intervent
 1. **Discovery**: Command is discovered (shell script, npm script, etc.)
 2. **Summary Generation**: GitHub Copilot generates a plain-language summary (1-3 sentences) describing what the command does
 3. **Summary Storage**: Summary is stored in the `commands` table (`summary` column) in SQLite
-4. **Embedding Generation**: The summary text is embedded into a 384-dimensional vector using `all-MiniLM-L6-v2`
-5. **Embedding Storage**: Vector is stored in the `commands` table (`embedding` BLOB column) in SQLite
-6. **Hash Storage**: Content hash is stored for change detection to avoid re-processing unchanged commands
+4. **Hash Storage**: Content hash is stored for change detection to avoid re-processing unchanged commands
 
 **Triggers**:
 - Initial scan: Process all commands when extension activates
 - File watch: Re-process when command files change (debounced 2000ms)
 - Never block the UI: All processing runs asynchronously in background
 
-**REQUIRED OUTCOME**: The database MUST contain BOTH summaries AND embeddings for all discovered commands. If either is missing, the feature is broken. If the tests don't prove this works e2e, the feature is NOT complete.
+**REQUIRED OUTCOME**: The database MUST contain summaries for all discovered commands. If missing, the feature is broken. If the tests don't prove this works e2e, the feature is NOT complete.
 
 ### Summary Generation
 **ai-summary-generation**
@@ -558,44 +539,6 @@ This is a **fully automated background process** that requires no user intervent
 - **Requirement**: GitHub Copilot installed and authenticated
 - **MUST HAPPEN**: For every discovered command, automatically in background
 
-### Embedding Generation
-**ai-embedding-generation**
-
-⛔️ TEMPORARILY DISABLED UNTIL WE CAN GET A SMALL EMBEDDING MODEL WORKING
-
-- **Model**: `all-MiniLM-L6-v2` via `@huggingface/transformers`
-- **Input**: The AI-generated summary text (NOT the raw command code)
-- **Output**: 384-dimensional Float32 vector
-- **Storage**: `commands.embedding` BLOB column in SQLite (1536 bytes)
-- **Size**: Model ~23 MB, downloaded to `{workspaceFolder}/.commandtree/models/`
-- **Performance**: ~10ms per embedding
-- **Runtime**: Pure JS/WASM, no native binaries
-- **MUST HAPPEN**: For every command that has a summary, automatically in background
-
-### Search Implementation
-**ai-search-implementation**
-
-Semantic search ranks and displays commands by vector proximity **using embeddings stored in the database**.
-
-**PREREQUISITE**: The `commands` table MUST contain valid embedding vectors for all commands. If the table is empty or embeddings are missing, semantic search cannot work.
-
-**Search Flow**:
-
-1. User invokes semantic search through magnifying glass icon in the UI
-2. User enters natural language query (e.g., "build the project")
-3. Query embedded using `all-MiniLM-L6-v2` (~10ms)
-4. **Load all embeddings from database**: Read `command_id` and `embedding` BLOB from `commands` table
-5. **Calculate cosine similarity**: Compare query embedding against ALL stored command embeddings
-6. Commands ranked by descending similarity score (0.0-1.0)
-7. Match percentage displayed next to each command (e.g., "build (87%)")
-8. Low-scoring commands filtered out using **permissive threshold** (err on side of showing more)
-   - Default threshold: 0.3 (30% similarity)
-   - Better to show irrelevant results than hide relevant ones
-
-**Score Display**: Similarity scores must be preserved and displayed to user. Never discard scores after ranking.
-
-**Note**: Tag filtering (`commandtree.filterByTag`) is separate and filters by tag membership.
-
 ### Verification
 **ai-verification**
 
@@ -607,20 +550,15 @@ sqlite3 .commandtree/commandtree.sqlite3
 
 # Check that summaries exist for all commands
 SELECT command_id, summary FROM commands;
-
-# Check that embeddings exist for all commands
-SELECT command_id, length(embedding) as embedding_size FROM commands;
 ```
 
 **Expected results**:
 - **Summaries**: Every row MUST have a non-empty `summary` column (plain text, 1-3 sentences)
-- **Embeddings**: Every row MUST have `embedding_size = 1536` bytes (384 floats × 4 bytes each)
 - **Row count**: Should match the number of discovered commands in the tree view
 
-**If summaries or embeddings are missing**:
+**If summaries are missing**:
 - The background processing is NOT running
 - GitHub Copilot may not be installed/authenticated
-- The embedding model may not be downloaded
 - **The feature is BROKEN and must be fixed**
 
 ---

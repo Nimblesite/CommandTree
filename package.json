@@ -115,6 +115,16 @@
         "command": "commandtree.openPreview",
         "title": "Open Preview",
         "icon": "$(open-preview)"
+      },
+      {
+        "command": "commandtree.generateSummaries",
+        "title": "Generate AI Summaries",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "commandtree.selectModel",
+        "title": "CommandTree: Select AI Model",
+        "icon": "$(hubot)"
       }
     ],
     "menus": {
@@ -343,6 +353,16 @@
             "Sort by command type, then alphabetically by name"
           ],
           "description": "How to sort commands within categories"
+        },
+        "commandtree.enableAiSummaries": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use GitHub Copilot to generate plain-language summaries of scripts, enabling semantic search"
+        },
+        "commandtree.aiModel": {
+          "type": "string",
+          "default": "",
+          "description": "Copilot model ID to use for summaries (e.g. 'gpt-4o-mini'). Leave empty to be prompted on first use."
         }
       }
     },

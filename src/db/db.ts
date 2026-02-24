@@ -1,11 +1,12 @@
 /**
  * SPEC: database-schema, database-schema/tags-table, database-schema/command-tags-junction, database-schema/tag-operations
- * Tag-only SQLite storage layer.
+ * SQLite storage layer for commands, tags, and AI summaries.
  * Uses node-sqlite3-wasm for WASM-based SQLite.
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import type { Result } from '../models/Result';
 import { ok, err } from '../models/Result';
 import { logger } from '../utils/logger';
@@ -54,6 +55,38 @@ export function closeDatabase(handle: DbHandle): Result<void, string> {
     }
 }
 
+export interface CommandRow {
+    readonly commandId: string;
+    readonly contentHash: string;
+    readonly summary: string;
+    readonly securityWarning: string | null;
+    readonly lastUpdated: string;
+}
+
+/**
+ * Computes a content hash for change detection.
+ */
+export function computeContentHash(content: string): string {
+    return crypto
+        .createHash('sha256')
+        .update(content)
+        .digest('hex')
+        .substring(0, 16);
+}
+
+function addColumnIfMissing(
+    handle: DbHandle,
+    table: string,
+    column: string,
+    definition: string,
+): void {
+    try {
+        handle.db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    } catch {
+        // Column already exists — expected for existing databases
+    }
+}
+
 /**
  * SPEC: database-schema, database-schema/tags-table, database-schema/command-tags-junction
  * Creates the commands, tags, and command_tags tables if they do not exist.
@@ -62,9 +95,17 @@ export function initSchema(handle: DbHandle): Result<void, string> {
     try {
         handle.db.exec(`
             CREATE TABLE IF NOT EXISTS ${COMMAND_TABLE} (
-                command_id TEXT PRIMARY KEY
+                command_id TEXT PRIMARY KEY,
+                content_hash TEXT NOT NULL DEFAULT '',
+                summary TEXT NOT NULL DEFAULT '',
+                security_warning TEXT,
+                last_updated TEXT NOT NULL DEFAULT ''
             )
         `);
+        addColumnIfMissing(handle, COMMAND_TABLE, 'content_hash', "TEXT NOT NULL DEFAULT ''");
+        addColumnIfMissing(handle, COMMAND_TABLE, 'summary', "TEXT NOT NULL DEFAULT ''");
+        addColumnIfMissing(handle, COMMAND_TABLE, 'security_warning', 'TEXT');
+        addColumnIfMissing(handle, COMMAND_TABLE, 'last_updated', "TEXT NOT NULL DEFAULT ''");
         handle.db.exec(`
             CREATE TABLE IF NOT EXISTS ${TAG_TABLE} (
                 tag_id TEXT PRIMARY KEY,
@@ -92,22 +133,122 @@ export function initSchema(handle: DbHandle): Result<void, string> {
 type RawRow = Record<string, number | bigint | string | Uint8Array | null>;
 
 /**
- * Ensures a command record exists for referential integrity.
+ * Registers a discovered command in the DB with its content hash.
+ * Inserts with empty summary if new; updates only content_hash if existing.
  */
-export function ensureCommandExists(params: {
+export function registerCommand(params: {
     readonly handle: DbHandle;
     readonly commandId: string;
+    readonly contentHash: string;
 }): Result<void, string> {
     try {
+        const now = new Date().toISOString();
         params.handle.db.run(
-            `INSERT OR IGNORE INTO ${COMMAND_TABLE} (command_id) VALUES (?)`,
-            [params.commandId],
+            `INSERT INTO ${COMMAND_TABLE}
+             (command_id, content_hash, summary, security_warning, last_updated)
+             VALUES (?, ?, '', NULL, ?)
+             ON CONFLICT(command_id) DO UPDATE SET
+               content_hash = excluded.content_hash,
+               last_updated = excluded.last_updated`,
+            [params.commandId, params.contentHash, now],
         );
         return ok(undefined);
     } catch (e) {
         const msg = e instanceof Error ? e.message : 'Failed to register command';
         return err(msg);
     }
+}
+
+/**
+ * Ensures a command record exists for referential integrity.
+ */
+export function ensureCommandExists(params: {
+    readonly handle: DbHandle;
+    readonly commandId: string;
+}): Result<void, string> {
+    return registerCommand({
+        handle: params.handle,
+        commandId: params.commandId,
+        contentHash: '',
+    });
+}
+
+/**
+ * Upserts ONLY the summary and content hash for a command.
+ * Used by the summary pipeline.
+ */
+export function upsertSummary(params: {
+    readonly handle: DbHandle;
+    readonly commandId: string;
+    readonly contentHash: string;
+    readonly summary: string;
+    readonly securityWarning: string | null;
+}): Result<void, string> {
+    try {
+        const now = new Date().toISOString();
+        params.handle.db.run(
+            `INSERT INTO ${COMMAND_TABLE}
+             (command_id, content_hash, summary, security_warning, last_updated)
+             VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT(command_id) DO UPDATE SET
+               content_hash = excluded.content_hash,
+               summary = excluded.summary,
+               security_warning = excluded.security_warning,
+               last_updated = excluded.last_updated`,
+            [params.commandId, params.contentHash, params.summary, params.securityWarning, now],
+        );
+        return ok(undefined);
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Failed to upsert summary';
+        return err(msg);
+    }
+}
+
+/**
+ * Gets a single command record by command ID.
+ */
+export function getRow(params: {
+    readonly handle: DbHandle;
+    readonly commandId: string;
+}): Result<CommandRow | undefined, string> {
+    try {
+        const row = params.handle.db.get(
+            `SELECT * FROM ${COMMAND_TABLE} WHERE command_id = ?`,
+            [params.commandId],
+        );
+        if (row === null) { return ok(undefined); }
+        return ok(rawToCommandRow(row as RawRow));
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Failed to get row';
+        return err(msg);
+    }
+}
+
+/**
+ * Gets all command records from the database.
+ */
+export function getAllRows(handle: DbHandle): Result<CommandRow[], string> {
+    try {
+        const rows = handle.db.all(`SELECT * FROM ${COMMAND_TABLE}`);
+        return ok(rows.map((r) => rawToCommandRow(r as RawRow)));
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Failed to get all rows';
+        return err(msg);
+    }
+}
+
+function rawToCommandRow(row: RawRow): CommandRow {
+    const warning = row['security_warning'];
+    const hash = row['content_hash'];
+    const sum = row['summary'];
+    const updated = row['last_updated'];
+    return {
+        commandId: row['command_id'] as string,
+        contentHash: typeof hash === 'string' ? hash : '',
+        summary: typeof sum === 'string' ? sum : '',
+        securityWarning: typeof warning === 'string' ? warning : null,
+        lastUpdated: typeof updated === 'string' ? updated : '',
+    };
 }
 
 /**
