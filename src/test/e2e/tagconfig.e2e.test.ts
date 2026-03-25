@@ -8,11 +8,7 @@
 
 import * as assert from "assert";
 import * as vscode from "vscode";
-import {
-  activateExtension,
-  sleep,
-  getCommandTreeProvider,
-} from "../helpers/helpers";
+import { activateExtension, sleep, getCommandTreeProvider } from "../helpers/helpers";
 import type { CommandTreeProvider } from "../helpers/helpers";
 import { getDb } from "../../db/lifecycle";
 import { getCommandIdsByTag, getTagsForCommand } from "../../db/db";
@@ -53,24 +49,14 @@ suite("Junction Table Tagging E2E Tests", () => {
     });
     assert.ok(tagsResult.ok, "Should get tags for command");
     assert.ok(tagsResult.value.length > 0, "Task should have at least one tag");
-    assert.ok(
-      tagsResult.value.includes(testTag),
-      `Task should have tag "${testTag}"`,
-    );
+    assert.ok(tagsResult.value.includes(testTag), `Task should have tag "${testTag}"`);
 
     // Verify getAllTags includes the new tag (exercises CommandTreeProvider.getAllTags + TagConfig.getTagNames)
     const allTags = treeProvider.getAllTags();
-    assert.ok(
-      allTags.includes(testTag),
-      `getAllTags should include "${testTag}"`,
-    );
+    assert.ok(allTags.includes(testTag), `getAllTags should include "${testTag}"`);
 
     // Clean up
-    await vscode.commands.executeCommand(
-      "commandtree.removeTag",
-      task,
-      testTag,
-    );
+    await vscode.commands.executeCommand("commandtree.removeTag", task, testTag);
     await sleep(500);
   });
 
@@ -96,21 +82,11 @@ suite("Junction Table Tagging E2E Tests", () => {
       handle: dbResult.value,
       commandId: task.id,
     });
-    assert.ok(
-      tagsResult.ok && tagsResult.value.length > 0,
-      "Tag should exist before removal",
-    );
-    assert.ok(
-      tagsResult.value.includes(testTag),
-      `Task should have tag "${testTag}"`,
-    );
+    assert.ok(tagsResult.ok && tagsResult.value.length > 0, "Tag should exist before removal");
+    assert.ok(tagsResult.value.includes(testTag), `Task should have tag "${testTag}"`);
 
     // Remove tag via UI
-    await vscode.commands.executeCommand(
-      "commandtree.removeTag",
-      task,
-      testTag,
-    );
+    await vscode.commands.executeCommand("commandtree.removeTag", task, testTag);
     await sleep(500);
 
     // Verify tag removed from database
@@ -119,10 +95,7 @@ suite("Junction Table Tagging E2E Tests", () => {
       commandId: task.id,
     });
     assert.ok(tagsResult.ok, "Should get tags for command");
-    assert.ok(
-      !tagsResult.value.includes(testTag),
-      `Tag "${testTag}" should be removed from command ${task.id}`,
-    );
+    assert.ok(!tagsResult.value.includes(testTag), `Tag "${testTag}" should be removed from command ${task.id}`);
   });
 
   // SPEC: database-schema/command-tags-junction
@@ -146,10 +119,7 @@ suite("Junction Table Tagging E2E Tests", () => {
       handle: dbResult.value,
       commandId: task.id,
     });
-    assert.ok(
-      tagsResult1.ok && tagsResult1.value.length > 0,
-      "Should have one tag",
-    );
+    assert.ok(tagsResult1.ok && tagsResult1.value.length > 0, "Should have one tag");
     const initialCount = tagsResult1.value.length;
 
     // Try to add same tag again (should be ignored by INSERT OR IGNORE)
@@ -161,18 +131,10 @@ suite("Junction Table Tagging E2E Tests", () => {
       commandId: task.id,
     });
     assert.ok(tagsResult2.ok, "Should get tags for command");
-    assert.strictEqual(
-      tagsResult2.value.length,
-      initialCount,
-      "Tag count should not increase when adding duplicate",
-    );
+    assert.strictEqual(tagsResult2.value.length, initialCount, "Tag count should not increase when adding duplicate");
 
     // Clean up
-    await vscode.commands.executeCommand(
-      "commandtree.removeTag",
-      task,
-      testTag,
-    );
+    await vscode.commands.executeCommand("commandtree.removeTag", task, testTag);
     await sleep(500);
   });
 
@@ -185,10 +147,7 @@ suite("Junction Table Tagging E2E Tests", () => {
 
     const task1 = allTasks[0];
     const task2 = allTasks[1];
-    assert.ok(
-      task1 !== undefined && task2 !== undefined,
-      "Both tasks must exist",
-    );
+    assert.ok(task1 !== undefined && task2 !== undefined, "Both tasks must exist");
 
     const testTag = "filter-test-tag";
 
@@ -206,26 +165,13 @@ suite("Junction Table Tagging E2E Tests", () => {
     });
 
     assert.ok(commandIdsResult.ok, "Should get command IDs for tag");
-    assert.ok(
-      commandIdsResult.value.length > 0,
-      "Should have at least one tagged command",
-    );
+    assert.ok(commandIdsResult.value.length > 0, "Should have at least one tagged command");
     const taggedIds = commandIdsResult.value;
-    assert.ok(
-      taggedIds.includes(task1.id),
-      `Tagged IDs should include task1 (${task1.id})`,
-    );
-    assert.ok(
-      !taggedIds.includes(task2.id),
-      `Tagged IDs should NOT include task2 (${task2.id})`,
-    );
+    assert.ok(taggedIds.includes(task1.id), `Tagged IDs should include task1 (${task1.id})`);
+    assert.ok(!taggedIds.includes(task2.id), `Tagged IDs should NOT include task2 (${task2.id})`);
 
     // Clean up
-    await vscode.commands.executeCommand(
-      "commandtree.removeTag",
-      task1,
-      testTag,
-    );
+    await vscode.commands.executeCommand("commandtree.removeTag", task1, testTag);
     await sleep(500);
   });
 
@@ -241,7 +187,7 @@ suite("Junction Table Tagging E2E Tests", () => {
     for (const tag of expectedTags) {
       assert.ok(
         allTags.includes(tag),
-        `Tag "${tag}" from commandtree.json should be synced. Found: [${allTags.join(", ")}]`,
+        `Tag "${tag}" from commandtree.json should be synced. Found: [${allTags.join(", ")}]`
       );
     }
 
@@ -253,10 +199,7 @@ suite("Junction Table Tagging E2E Tests", () => {
       tagName: "scripts",
     });
     assert.ok(scriptsResult.ok, "Should get command IDs for scripts tag");
-    assert.ok(
-      scriptsResult.value.length > 0,
-      "scripts tag should match shell commands",
-    );
+    assert.ok(scriptsResult.value.length > 0, "scripts tag should match shell commands");
 
     // Verify "debug" tag applies to launch configs (type: "launch" pattern)
     const debugResult = getCommandIdsByTag({
@@ -264,9 +207,6 @@ suite("Junction Table Tagging E2E Tests", () => {
       tagName: "debug",
     });
     assert.ok(debugResult.ok, "Should get command IDs for debug tag");
-    assert.ok(
-      debugResult.value.length > 0,
-      "debug tag should match launch configs",
-    );
+    assert.ok(debugResult.value.length > 0, "debug tag should match launch configs");
   });
 });

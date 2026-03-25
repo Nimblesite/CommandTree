@@ -10,12 +10,7 @@ import * as assert from "assert";
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import {
-  activateExtension,
-  sleep,
-  getFixturePath,
-  createMockTaskItem,
-} from "../helpers/helpers";
+import { activateExtension, sleep, getFixturePath, createMockTaskItem } from "../helpers/helpers";
 import type { TestContext } from "../helpers/helpers";
 
 interface PackageJson {
@@ -44,10 +39,7 @@ suite("Command Execution E2E Tests", () => {
       this.timeout(10000);
 
       const commands = await vscode.commands.getCommands(true);
-      assert.ok(
-        commands.includes("commandtree.run"),
-        "run command should be registered",
-      );
+      assert.ok(commands.includes("commandtree.run"), "run command should be registered");
     });
 
     test("run command handles undefined task gracefully", async function () {
@@ -63,11 +55,7 @@ suite("Command Execution E2E Tests", () => {
       }
 
       const terminalsAfter = vscode.window.terminals.length;
-      assert.strictEqual(
-        terminalsAfter,
-        terminalsBefore,
-        "Should not create terminal for undefined task",
-      );
+      assert.strictEqual(terminalsAfter, terminalsBefore, "Should not create terminal for undefined task");
     });
 
     test("run command handles null task gracefully", async function () {
@@ -83,11 +71,7 @@ suite("Command Execution E2E Tests", () => {
       }
 
       const terminalsAfter = vscode.window.terminals.length;
-      assert.strictEqual(
-        terminalsAfter,
-        terminalsBefore,
-        "Should not create terminal for null task",
-      );
+      assert.strictEqual(terminalsAfter, terminalsBefore, "Should not create terminal for null task");
     });
   });
 
@@ -123,53 +107,29 @@ suite("Command Execution E2E Tests", () => {
         await sleep(2000);
 
         const terminalsAfter = vscode.window.terminals.length;
-        assert.ok(
-          terminalsAfter >= terminalsBefore,
-          "Shell task should create or reuse terminal",
-        );
+        assert.ok(terminalsAfter >= terminalsBefore, "Shell task should create or reuse terminal");
       } catch {
         const terminalsAfter = vscode.window.terminals.length;
-        assert.ok(
-          terminalsAfter >= 0,
-          "Terminals should remain accessible after param prompt",
-        );
+        assert.ok(terminalsAfter >= 0, "Terminals should remain accessible after param prompt");
       }
     });
 
     test("shell task with parameters has param definitions", function () {
       this.timeout(10000);
 
-      const buildScript = fs.readFileSync(
-        getFixturePath("scripts/build.sh"),
-        "utf8",
-      );
+      const buildScript = fs.readFileSync(getFixturePath("scripts/build.sh"), "utf8");
 
-      assert.ok(
-        buildScript.includes("@param config"),
-        "Should have config param",
-      );
-      assert.ok(
-        buildScript.includes("@param verbose"),
-        "Should have verbose param",
-      );
+      assert.ok(buildScript.includes("@param config"), "Should have config param");
+      assert.ok(buildScript.includes("@param verbose"), "Should have verbose param");
     });
 
     test("shell task with options shows quick pick", function () {
       this.timeout(10000);
 
-      const deployScript = fs.readFileSync(
-        getFixturePath("scripts/deploy.sh"),
-        "utf8",
-      );
+      const deployScript = fs.readFileSync(getFixturePath("scripts/deploy.sh"), "utf8");
 
-      assert.ok(
-        deployScript.includes("options:"),
-        "Should have options in param",
-      );
-      assert.ok(
-        deployScript.includes("dev, staging, prod"),
-        "Should list environment options",
-      );
+      assert.ok(deployScript.includes("options:"), "Should have options in param");
+      assert.ok(deployScript.includes("dev, staging, prod"), "Should list environment options");
     });
   });
 
@@ -178,9 +138,7 @@ suite("Command Execution E2E Tests", () => {
     test("npm scripts are defined in package.json", function () {
       this.timeout(10000);
 
-      const packageJson = JSON.parse(
-        fs.readFileSync(getFixturePath("package.json"), "utf8"),
-      ) as PackageJson;
+      const packageJson = JSON.parse(fs.readFileSync(getFixturePath("package.json"), "utf8")) as PackageJson;
       const scripts = packageJson.scripts;
 
       assert.ok(scripts !== undefined, "Should have scripts object");
@@ -198,11 +156,7 @@ suite("Command Execution E2E Tests", () => {
         cwd: context.workspaceRoot,
       });
 
-      assert.strictEqual(
-        npmTask.command,
-        "npm run build",
-        "Should have correct command",
-      );
+      assert.strictEqual(npmTask.command, "npm run build", "Should have correct command");
     });
 
     test("npm task uses correct working directory", function () {
@@ -218,11 +172,7 @@ suite("Command Execution E2E Tests", () => {
         category: "subproject",
       });
 
-      assert.strictEqual(
-        npmTask.cwd,
-        subprojectCwd,
-        "Should have subproject cwd",
-      );
+      assert.strictEqual(npmTask.cwd, subprojectCwd, "Should have subproject cwd");
     });
   });
 
@@ -248,11 +198,7 @@ suite("Command Execution E2E Tests", () => {
         cwd: context.workspaceRoot,
       });
 
-      assert.strictEqual(
-        makeTask.command,
-        "make build",
-        "Should have correct command",
-      );
+      assert.strictEqual(makeTask.command, "make build", "Should have correct command");
     });
 
     test("make task targets phony declarations", function () {
@@ -269,15 +215,9 @@ suite("Command Execution E2E Tests", () => {
     test("launch configurations are defined", function () {
       this.timeout(10000);
 
-      const launchJson = fs.readFileSync(
-        getFixturePath(".vscode/launch.json"),
-        "utf8",
-      );
+      const launchJson = fs.readFileSync(getFixturePath(".vscode/launch.json"), "utf8");
 
-      assert.ok(
-        launchJson.includes("Debug Application"),
-        "Should have Debug Application",
-      );
+      assert.ok(launchJson.includes("Debug Application"), "Should have Debug Application");
       assert.ok(launchJson.includes("Debug Tests"), "Should have Debug Tests");
     });
 
@@ -296,16 +236,10 @@ suite("Command Execution E2E Tests", () => {
     test("launch configurations have correct types", function () {
       this.timeout(10000);
 
-      const launchJson = fs.readFileSync(
-        getFixturePath(".vscode/launch.json"),
-        "utf8",
-      );
+      const launchJson = fs.readFileSync(getFixturePath(".vscode/launch.json"), "utf8");
 
       assert.ok(launchJson.includes('"type": "node"'), "Should have node type");
-      assert.ok(
-        launchJson.includes('"type": "python"'),
-        "Should have python type",
-      );
+      assert.ok(launchJson.includes('"type": "python"'), "Should have python type");
     });
   });
 
@@ -314,15 +248,9 @@ suite("Command Execution E2E Tests", () => {
     test("VS Code tasks are defined", function () {
       this.timeout(10000);
 
-      const tasksJson = fs.readFileSync(
-        getFixturePath(".vscode/tasks.json"),
-        "utf8",
-      );
+      const tasksJson = fs.readFileSync(getFixturePath(".vscode/tasks.json"), "utf8");
 
-      assert.ok(
-        tasksJson.includes("Build Project"),
-        "Should have Build Project",
-      );
+      assert.ok(tasksJson.includes("Build Project"), "Should have Build Project");
       assert.ok(tasksJson.includes("Run Tests"), "Should have Run Tests");
     });
 
@@ -337,19 +265,10 @@ suite("Command Execution E2E Tests", () => {
     test("vscode task with inputs has parameter definitions", function () {
       this.timeout(10000);
 
-      const tasksJson = fs.readFileSync(
-        getFixturePath(".vscode/tasks.json"),
-        "utf8",
-      );
+      const tasksJson = fs.readFileSync(getFixturePath(".vscode/tasks.json"), "utf8");
 
-      assert.ok(
-        tasksJson.includes("${input:deployEnv}"),
-        "Should reference deployEnv",
-      );
-      assert.ok(
-        tasksJson.includes('"id": "deployEnv"'),
-        "Should define deployEnv input",
-      );
+      assert.ok(tasksJson.includes("${input:deployEnv}"), "Should reference deployEnv");
+      assert.ok(tasksJson.includes('"id": "deployEnv"'), "Should define deployEnv input");
     });
   });
 
@@ -365,11 +284,7 @@ suite("Command Execution E2E Tests", () => {
         params: [],
       });
 
-      assert.strictEqual(
-        taskWithoutParams.params?.length ?? 0,
-        0,
-        "Should have no params",
-      );
+      assert.strictEqual(taskWithoutParams.params?.length ?? 0, 0, "Should have no params");
     });
 
     test("task with params has param definitions", function () {
@@ -389,11 +304,7 @@ suite("Command Execution E2E Tests", () => {
         ],
       });
 
-      assert.strictEqual(
-        taskWithParams.params?.length ?? 0,
-        2,
-        "Should have 2 params",
-      );
+      assert.strictEqual(taskWithParams.params?.length ?? 0, 2, "Should have 2 params");
     });
 
     test("param with options creates quick pick choices", function () {
@@ -417,10 +328,7 @@ suite("Command Execution E2E Tests", () => {
         default: "debug",
       };
 
-      assert.ok(
-        paramWithDefault.default === "debug",
-        "Should have default value",
-      );
+      assert.ok(paramWithDefault.default === "debug", "Should have default value");
     });
   });
 
@@ -437,10 +345,7 @@ suite("Command Execution E2E Tests", () => {
       });
 
       assert.ok(taskWithParams.params !== undefined, "Task should have params");
-      assert.ok(
-        taskWithParams.params.length > 0,
-        "Task should have at least one param",
-      );
+      assert.ok(taskWithParams.params.length > 0, "Task should have at least one param");
     });
   });
 
@@ -449,10 +354,7 @@ suite("Command Execution E2E Tests", () => {
     test("terminals are created for shell tasks", function () {
       this.timeout(10000);
 
-      assert.ok(
-        vscode.window.terminals.length >= 0,
-        "Terminals API should be available",
-      );
+      assert.ok(vscode.window.terminals.length >= 0, "Terminals API should be available");
     });
 
     test("terminal names are descriptive", async function () {
@@ -470,28 +372,15 @@ suite("Command Execution E2E Tests", () => {
       await vscode.commands.executeCommand("commandtree.run", commandTreeItem);
       await sleep(1500);
 
-      const commandTreeTerminal = vscode.window.terminals.find((t) =>
-        t.name.includes("CommandTree"),
-      );
-      assert.ok(
-        commandTreeTerminal !== undefined,
-        "Terminal should have CommandTree in name",
-      );
+      const commandTreeTerminal = vscode.window.terminals.find((t) => t.name.includes("CommandTree"));
+      assert.ok(commandTreeTerminal !== undefined, "Terminal should have CommandTree in name");
     });
 
     test("task execution creates VS Code task", function () {
       this.timeout(15000);
 
-      assert.strictEqual(
-        typeof vscode.tasks.fetchTasks,
-        "function",
-        "fetchTasks should be a function",
-      );
-      assert.strictEqual(
-        typeof vscode.tasks.executeTask,
-        "function",
-        "executeTask should be a function",
-      );
+      assert.strictEqual(typeof vscode.tasks.fetchTasks, "function", "fetchTasks should be a function");
+      assert.strictEqual(typeof vscode.tasks.executeTask, "function", "executeTask should be a function");
     });
   });
 
@@ -516,10 +405,7 @@ suite("Command Execution E2E Tests", () => {
       await sleep(1500);
 
       const terminalsAfter = vscode.window.terminals.length;
-      assert.ok(
-        terminalsAfter >= terminalsBefore,
-        "Should have at least as many terminals",
-      );
+      assert.ok(terminalsAfter >= terminalsBefore, "Should have at least as many terminals");
     });
 
     test("commandtree.run terminal has descriptive name", async function () {
@@ -538,13 +424,8 @@ suite("Command Execution E2E Tests", () => {
       await vscode.commands.executeCommand("commandtree.run", commandTreeItem);
       await sleep(1500);
 
-      const commandTreeTerminal = vscode.window.terminals.find((t) =>
-        t.name.includes("CommandTree"),
-      );
-      assert.ok(
-        commandTreeTerminal !== undefined,
-        "Should create terminal with CommandTree in name",
-      );
+      const commandTreeTerminal = vscode.window.terminals.find((t) => t.name.includes("CommandTree"));
+      assert.ok(commandTreeTerminal !== undefined, "Should create terminal with CommandTree in name");
     });
 
     test("commandtree.run handles undefined gracefully", async function () {
@@ -559,11 +440,7 @@ suite("Command Execution E2E Tests", () => {
       }
 
       const terminalsAfter = vscode.window.terminals.length;
-      assert.strictEqual(
-        terminalsAfter,
-        terminalsBefore,
-        "Should not create terminal for undefined task",
-      );
+      assert.strictEqual(terminalsAfter, terminalsBefore, "Should not create terminal for undefined task");
     });
 
     test("commandtree.run handles null task property gracefully", async function () {
@@ -578,11 +455,7 @@ suite("Command Execution E2E Tests", () => {
       }
 
       const terminalsAfter = vscode.window.terminals.length;
-      assert.strictEqual(
-        terminalsAfter,
-        terminalsBefore,
-        "Should not create terminal for null task property",
-      );
+      assert.strictEqual(terminalsAfter, terminalsBefore, "Should not create terminal for null task property");
     });
   });
 
@@ -594,7 +467,7 @@ suite("Command Execution E2E Tests", () => {
       const commands = await vscode.commands.getCommands(true);
       assert.ok(
         commands.includes("commandtree.runInCurrentTerminal"),
-        "runInCurrentTerminal command should be registered",
+        "runInCurrentTerminal command should be registered"
       );
     });
 
@@ -616,23 +489,16 @@ suite("Command Execution E2E Tests", () => {
 
       const commandTreeItem = { data: shellTask };
 
-      await vscode.commands.executeCommand(
-        "commandtree.runInCurrentTerminal",
-        commandTreeItem,
-      );
+      await vscode.commands.executeCommand("commandtree.runInCurrentTerminal", commandTreeItem);
       await sleep(1500);
 
-      assert.ok(
-        vscode.window.terminals.length >= 1,
-        "Should create terminal if none exists",
-      );
+      assert.ok(vscode.window.terminals.length >= 1, "Should create terminal if none exists");
     });
 
     test("runInCurrentTerminal uses active terminal if available", async function () {
       this.timeout(15000);
 
-      const existingTerminal =
-        vscode.window.createTerminal("Existing Terminal");
+      const existingTerminal = vscode.window.createTerminal("Existing Terminal");
       existingTerminal.show();
       await sleep(500);
 
@@ -648,17 +514,11 @@ suite("Command Execution E2E Tests", () => {
 
       const commandTreeItem = { data: shellTask };
 
-      await vscode.commands.executeCommand(
-        "commandtree.runInCurrentTerminal",
-        commandTreeItem,
-      );
+      await vscode.commands.executeCommand("commandtree.runInCurrentTerminal", commandTreeItem);
       await sleep(1000);
 
       const terminalsAfter = vscode.window.terminals.length;
-      assert.ok(
-        terminalsAfter <= terminalsBefore + 1,
-        "Should reuse existing terminal or create at most one",
-      );
+      assert.ok(terminalsAfter <= terminalsBefore + 1, "Should reuse existing terminal or create at most one");
     });
 
     test("runInCurrentTerminal handles undefined gracefully", async function () {
@@ -667,19 +527,13 @@ suite("Command Execution E2E Tests", () => {
       const terminalsBefore = vscode.window.terminals.length;
 
       try {
-        await vscode.commands.executeCommand(
-          "commandtree.runInCurrentTerminal",
-          undefined,
-        );
+        await vscode.commands.executeCommand("commandtree.runInCurrentTerminal", undefined);
       } catch {
         // Expected behavior
       }
 
       const terminalsAfter = vscode.window.terminals.length;
-      assert.ok(
-        terminalsAfter <= terminalsBefore + 1,
-        "Should not create more than one terminal for undefined task",
-      );
+      assert.ok(terminalsAfter <= terminalsBefore + 1, "Should not create more than one terminal for undefined task");
     });
 
     test("runInCurrentTerminal shows terminal", async function () {
@@ -695,16 +549,10 @@ suite("Command Execution E2E Tests", () => {
 
       const commandTreeItem = { data: shellTask };
 
-      await vscode.commands.executeCommand(
-        "commandtree.runInCurrentTerminal",
-        commandTreeItem,
-      );
+      await vscode.commands.executeCommand("commandtree.runInCurrentTerminal", commandTreeItem);
       await sleep(1000);
 
-      assert.ok(
-        vscode.window.activeTerminal !== undefined,
-        "Should have active terminal after execution",
-      );
+      assert.ok(vscode.window.activeTerminal !== undefined, "Should have active terminal after execution");
     });
   });
 
@@ -713,11 +561,7 @@ suite("Command Execution E2E Tests", () => {
     test("launch tasks use debug API", function () {
       this.timeout(10000);
 
-      assert.strictEqual(
-        typeof vscode.debug.startDebugging,
-        "function",
-        "startDebugging should be a function",
-      );
+      assert.strictEqual(typeof vscode.debug.startDebugging, "function", "startDebugging should be a function");
     });
 
     test("active debug sessions can be queried", function () {
@@ -725,27 +569,15 @@ suite("Command Execution E2E Tests", () => {
 
       const session = vscode.debug.activeDebugSession;
       if (session !== undefined) {
-        assert.strictEqual(
-          typeof session.name,
-          "string",
-          "Active session should have name",
-        );
-        assert.strictEqual(
-          typeof session.type,
-          "string",
-          "Active session should have type",
-        );
+        assert.strictEqual(typeof session.name, "string", "Active session should have name");
+        assert.strictEqual(typeof session.type, "string", "Active session should have type");
       }
       const sessionType = typeof vscode.debug.activeDebugSession;
       assert.ok(
         sessionType === "object" || sessionType === "undefined",
-        "activeDebugSession should be queryable (object or undefined)",
+        "activeDebugSession should be queryable (object or undefined)"
       );
-      assert.strictEqual(
-        typeof vscode.debug.startDebugging,
-        "function",
-        "startDebugging should be a function",
-      );
+      assert.strictEqual(typeof vscode.debug.startDebugging, "function", "startDebugging should be a function");
     });
   });
 
@@ -759,10 +591,7 @@ suite("Command Execution E2E Tests", () => {
         cwd: context.workspaceRoot,
       });
 
-      assert.ok(
-        task.cwd === context.workspaceRoot,
-        "Should have workspace root as cwd",
-      );
+      assert.ok(task.cwd === context.workspaceRoot, "Should have workspace root as cwd");
     });
 
     test("npm tasks use package.json directory as cwd", function () {
@@ -775,10 +604,7 @@ suite("Command Execution E2E Tests", () => {
         cwd: subprojectDir,
       });
 
-      assert.ok(
-        task.cwd === subprojectDir,
-        "Should have subproject dir as cwd",
-      );
+      assert.ok(task.cwd === subprojectDir, "Should have subproject dir as cwd");
     });
 
     test("make tasks use Makefile directory as cwd", function () {
@@ -789,10 +615,7 @@ suite("Command Execution E2E Tests", () => {
         cwd: context.workspaceRoot,
       });
 
-      assert.ok(
-        task.cwd === context.workspaceRoot,
-        "Should have Makefile dir as cwd",
-      );
+      assert.ok(task.cwd === context.workspaceRoot, "Should have Makefile dir as cwd");
     });
   });
 
@@ -818,26 +641,18 @@ suite("Command Execution E2E Tests", () => {
       });
 
       const commandTreeItem = { data: shellTask };
-      await vscode.commands.executeCommand(
-        "commandtree.runInCurrentTerminal",
-        commandTreeItem,
-      );
+      await vscode.commands.executeCommand("commandtree.runInCurrentTerminal", commandTreeItem);
       await sleep(1500);
 
       const finalCount = vscode.window.terminals.length;
       assert.ok(finalCount >= 1, "Should create a terminal when none exists");
-      assert.ok(
-        vscode.window.activeTerminal !== undefined,
-        "Created terminal should be active",
-      );
+      assert.ok(vscode.window.activeTerminal !== undefined, "Created terminal should be active");
     });
 
     test("runInCurrentTerminal reuses existing active terminal", async function () {
       this.timeout(15000);
 
-      const existingTerminal = vscode.window.createTerminal(
-        "Existing Test Terminal",
-      );
+      const existingTerminal = vscode.window.createTerminal("Existing Test Terminal");
       existingTerminal.show();
       await sleep(500);
 
@@ -852,18 +667,11 @@ suite("Command Execution E2E Tests", () => {
       });
 
       const commandTreeItem = { data: shellTask };
-      await vscode.commands.executeCommand(
-        "commandtree.runInCurrentTerminal",
-        commandTreeItem,
-      );
+      await vscode.commands.executeCommand("commandtree.runInCurrentTerminal", commandTreeItem);
       await sleep(1000);
 
       const terminalCountAfter = vscode.window.terminals.length;
-      assert.strictEqual(
-        terminalCountAfter,
-        terminalCountBefore,
-        "Should reuse existing terminal, not create new one",
-      );
+      assert.strictEqual(terminalCountAfter, terminalCountBefore, "Should reuse existing terminal, not create new one");
     });
 
     test("new terminal has CommandTree prefix in name", async function () {
@@ -888,17 +696,12 @@ suite("Command Execution E2E Tests", () => {
       await sleep(3000);
 
       const terminals = vscode.window.terminals;
-      const commandTreeTerminal = terminals.find((t) =>
-        t.name.includes("CommandTree"),
-      );
+      const commandTreeTerminal = terminals.find((t) => t.name.includes("CommandTree"));
       assert.ok(
         commandTreeTerminal !== undefined,
-        `Should create terminal with CommandTree in name. Found terminals: [${terminals.map((t) => t.name).join(", ")}]`,
+        `Should create terminal with CommandTree in name. Found terminals: [${terminals.map((t) => t.name).join(", ")}]`
       );
-      assert.ok(
-        commandTreeTerminal.name.includes("Named Terminal Test"),
-        "Terminal name should include task label",
-      );
+      assert.ok(commandTreeTerminal.name.includes("Named Terminal Test"), "Terminal name should include task label");
     });
 
     test("terminal execution with cwd sets working directory", async function () {
@@ -918,13 +721,8 @@ suite("Command Execution E2E Tests", () => {
       await vscode.commands.executeCommand("commandtree.run", commandTreeItem);
       await sleep(1500);
 
-      const commandTreeTerminal = vscode.window.terminals.find((t) =>
-        t.name.includes("CWD Test Task"),
-      );
-      assert.ok(
-        commandTreeTerminal !== undefined,
-        "Should create terminal for task with cwd",
-      );
+      const commandTreeTerminal = vscode.window.terminals.find((t) => t.name.includes("CWD Test Task"));
+      assert.ok(commandTreeTerminal !== undefined, "Should create terminal for task with cwd");
     });
   });
 });

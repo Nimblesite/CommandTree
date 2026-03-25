@@ -1,11 +1,7 @@
 import * as assert from "assert";
 import * as path from "path";
 import type { CommandItem } from "../../models/TaskItem";
-import {
-  groupByFullDir,
-  buildDirTree,
-  needsFolderWrapper,
-} from "../../tree/dirTree";
+import { groupByFullDir, buildDirTree, needsFolderWrapper } from "../../tree/dirTree";
 
 /**
  * TODO: No corresponding section in spec
@@ -59,7 +55,7 @@ suite("Tree Hierarchy Unit Tests", function () {
       assert.strictEqual(
         needsFolderWrapper(node, 1),
         false,
-        "Single task in single folder should not need folder wrapper",
+        "Single task in single folder should not need folder wrapper"
       );
     });
 
@@ -84,11 +80,7 @@ suite("Tree Hierarchy Unit Tests", function () {
       const node = tree[0];
       assert.ok(node !== undefined);
       assert.strictEqual(node.tasks.length, 2, "Folder should contain 2 tasks");
-      assert.strictEqual(
-        needsFolderWrapper(node, 1),
-        true,
-        "Multiple tasks should need folder wrapper",
-      );
+      assert.strictEqual(needsFolderWrapper(node, 1), true, "Multiple tasks should need folder wrapper");
     });
 
     test("parent/child directories should be properly nested", () => {
@@ -100,40 +92,17 @@ suite("Tree Hierarchy Unit Tests", function () {
         createMockTask({
           id: "shell:import",
           label: "import.sh",
-          filePath: path.join(
-            WORKSPACE,
-            "Samples",
-            "ICD10",
-            "scripts",
-            "CreateDb",
-            "import.sh",
-          ),
+          filePath: path.join(WORKSPACE, "Samples", "ICD10", "scripts", "CreateDb", "import.sh"),
         }),
         createMockTask({
           id: "shell:start",
           label: "start.sh",
-          filePath: path.join(
-            WORKSPACE,
-            "Samples",
-            "ICD10",
-            "scripts",
-            "CreateDb",
-            "Dependencies",
-            "start.sh",
-          ),
+          filePath: path.join(WORKSPACE, "Samples", "ICD10", "scripts", "CreateDb", "Dependencies", "start.sh"),
         }),
         createMockTask({
           id: "shell:stop",
           label: "stop.sh",
-          filePath: path.join(
-            WORKSPACE,
-            "Samples",
-            "ICD10",
-            "scripts",
-            "CreateDb",
-            "Dependencies",
-            "stop.sh",
-          ),
+          filePath: path.join(WORKSPACE, "Samples", "ICD10", "scripts", "CreateDb", "Dependencies", "stop.sh"),
         }),
       ];
 
@@ -144,34 +113,16 @@ suite("Tree Hierarchy Unit Tests", function () {
       assert.strictEqual(tree.length, 1, "Should have 1 root node (CreateDb)");
       const createDb = tree[0];
       assert.ok(createDb !== undefined);
-      assert.ok(
-        createDb.dir.endsWith("CreateDb"),
-        `Root dir should be CreateDb, got: ${createDb.dir}`,
-      );
-      assert.strictEqual(
-        createDb.tasks.length,
-        1,
-        "CreateDb should have import.sh",
-      );
+      assert.ok(createDb.dir.endsWith("CreateDb"), `Root dir should be CreateDb, got: ${createDb.dir}`);
+      assert.strictEqual(createDb.tasks.length, 1, "CreateDb should have import.sh");
       assert.strictEqual(createDb.tasks[0]?.label, "import.sh");
 
       // Dependencies should be a CHILD of CreateDb, not a sibling
-      assert.strictEqual(
-        createDb.subdirs.length,
-        1,
-        "CreateDb should have 1 subdir",
-      );
+      assert.strictEqual(createDb.subdirs.length, 1, "CreateDb should have 1 subdir");
       const deps = createDb.subdirs[0];
       assert.ok(deps !== undefined);
-      assert.ok(
-        deps.dir.endsWith("Dependencies"),
-        `Subdir should be Dependencies, got: ${deps.dir}`,
-      );
-      assert.strictEqual(
-        deps.tasks.length,
-        2,
-        "Dependencies should have 2 tasks",
-      );
+      assert.ok(deps.dir.endsWith("Dependencies"), `Subdir should be Dependencies, got: ${deps.dir}`);
+      assert.strictEqual(deps.tasks.length, 2, "Dependencies should have 2 tasks");
     });
 
     test("unrelated directories should remain flat siblings", () => {
@@ -197,17 +148,9 @@ suite("Tree Hierarchy Unit Tests", function () {
       const tree = buildDirTree(groups);
 
       // All in different unrelated dirs, should be 3 root nodes
-      assert.strictEqual(
-        tree.length,
-        3,
-        "Should have 3 root nodes for unrelated dirs",
-      );
+      assert.strictEqual(tree.length, 3, "Should have 3 root nodes for unrelated dirs");
       for (const node of tree) {
-        assert.strictEqual(
-          node.subdirs.length,
-          0,
-          "Unrelated dirs should have no subdirs",
-        );
+        assert.strictEqual(node.subdirs.length, 0, "Unrelated dirs should have no subdirs");
       }
     });
 

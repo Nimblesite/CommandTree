@@ -13,7 +13,7 @@ function showError(message: string): void {
     },
     () => {
       /* error showing message */
-    },
+    }
   );
 }
 
@@ -58,9 +58,7 @@ export class TaskRunner {
   /**
    * Collects parameter values from user with their definitions.
    */
-  private async collectParams(
-    params?: readonly ParamDef[],
-  ): Promise<Array<{ def: ParamDef; value: string }> | null> {
+  private async collectParams(params?: readonly ParamDef[]): Promise<Array<{ def: ParamDef; value: string }> | null> {
     const collected: Array<{ def: ParamDef; value: string }> = [];
     if (params === undefined || params.length === 0) {
       return collected;
@@ -102,10 +100,7 @@ export class TaskRunner {
       return;
     }
 
-    const started = await vscode.debug.startDebugging(
-      workspaceFolder,
-      task.command,
-    );
+    const started = await vscode.debug.startDebugging(workspaceFolder, task.command);
 
     if (!started) {
       showError(`Failed to start: ${task.label}`);
@@ -130,19 +125,13 @@ export class TaskRunner {
    * Opens a markdown file in preview mode.
    */
   private async runMarkdownPreview(task: CommandItem): Promise<void> {
-    await vscode.commands.executeCommand(
-      "markdown.showPreview",
-      vscode.Uri.file(task.filePath),
-    );
+    await vscode.commands.executeCommand("markdown.showPreview", vscode.Uri.file(task.filePath));
   }
 
   /**
    * Runs a command in a new terminal.
    */
-  private runInNewTerminal(
-    task: CommandItem,
-    params: Array<{ def: ParamDef; value: string }>,
-  ): void {
+  private runInNewTerminal(task: CommandItem, params: Array<{ def: ParamDef; value: string }>): void {
     const command = this.buildCommand(task, params);
     const terminalOptions: vscode.TerminalOptions = {
       name: `CommandTree: ${task.label}`,
@@ -158,10 +147,7 @@ export class TaskRunner {
   /**
    * Runs a command in the current (active) terminal.
    */
-  private runInCurrentTerminal(
-    task: CommandItem,
-    params: Array<{ def: ParamDef; value: string }>,
-  ): void {
+  private runInCurrentTerminal(task: CommandItem, params: Array<{ def: ParamDef; value: string }>): void {
     const command = this.buildCommand(task, params);
     let terminal = vscode.window.activeTerminal;
 
@@ -177,10 +163,7 @@ export class TaskRunner {
 
     terminal.show();
 
-    const fullCommand =
-      task.cwd !== undefined && task.cwd !== ""
-        ? `cd "${task.cwd}" && ${command}`
-        : command;
+    const fullCommand = task.cwd !== undefined && task.cwd !== "" ? `cd "${task.cwd}" && ${command}` : command;
 
     this.executeInTerminal(terminal, fullCommand);
   }
@@ -198,20 +181,15 @@ export class TaskRunner {
     this.waitForShellIntegration(terminal, command);
   }
 
-  private waitForShellIntegration(
-    terminal: vscode.Terminal,
-    command: string,
-  ): void {
+  private waitForShellIntegration(terminal: vscode.Terminal, command: string): void {
     let resolved = false;
-    const listener = vscode.window.onDidChangeTerminalShellIntegration(
-      ({ terminal: t, shellIntegration }) => {
-        if (t === terminal && !resolved) {
-          resolved = true;
-          listener.dispose();
-          this.safeSendText(terminal, command, shellIntegration);
-        }
-      },
-    );
+    const listener = vscode.window.onDidChangeTerminalShellIntegration(({ terminal: t, shellIntegration }) => {
+      if (t === terminal && !resolved) {
+        resolved = true;
+        listener.dispose();
+        this.safeSendText(terminal, command, shellIntegration);
+      }
+    });
     setTimeout(() => {
       if (!resolved) {
         resolved = true;
@@ -228,7 +206,7 @@ export class TaskRunner {
   private safeSendText(
     terminal: vscode.Terminal,
     command: string,
-    shellIntegration?: vscode.TerminalShellIntegration,
+    shellIntegration?: vscode.TerminalShellIntegration
   ): void {
     try {
       if (shellIntegration !== undefined) {
@@ -244,10 +222,7 @@ export class TaskRunner {
   /**
    * Builds the full command string with formatted parameters.
    */
-  private buildCommand(
-    task: CommandItem,
-    params: Array<{ def: ParamDef; value: string }>,
-  ): string {
+  private buildCommand(task: CommandItem, params: Array<{ def: ParamDef; value: string }>): string {
     let command = task.command;
     const parts: string[] = [];
 

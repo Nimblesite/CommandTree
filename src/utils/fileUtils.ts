@@ -6,15 +6,12 @@ import { ok, err } from "../models/TaskItem";
  * Reads a file and returns its content as a string.
  * Returns Err on failure instead of throwing.
  */
-export async function readFile(
-  uri: vscode.Uri,
-): Promise<Result<string, string>> {
+export async function readFile(uri: vscode.Uri): Promise<Result<string, string>> {
   try {
     const bytes = await vscode.workspace.fs.readFile(uri);
     return ok(new TextDecoder().decode(bytes));
   } catch (e) {
-    const message =
-      e instanceof Error ? e.message : "Unknown error reading file";
+    const message = e instanceof Error ? e.message : "Unknown error reading file";
     return err(message);
   }
 }
@@ -105,9 +102,7 @@ function skipUntilBlockEnd(content: string, start: number): number {
  * Reads and parses a JSON file, handling JSONC comments.
  * Returns Err on read or parse failure.
  */
-export async function readJsonFile<T>(
-  uri: vscode.Uri,
-): Promise<Result<T, string>> {
+export async function readJsonFile<T>(uri: vscode.Uri): Promise<Result<T, string>> {
   const contentResult = await readFile(uri);
   if (!contentResult.ok) {
     return contentResult;

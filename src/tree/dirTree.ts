@@ -19,15 +19,11 @@ export interface DirNode<T extends DirTaskInfo> {
 /**
  * Groups tasks by their full relative directory path.
  */
-export function groupByFullDir<T extends DirTaskInfo>(
-  tasks: T[],
-  workspaceRoot: string,
-): Map<string, T[]> {
+export function groupByFullDir<T extends DirTaskInfo>(tasks: T[], workspaceRoot: string): Map<string, T[]> {
   const groups = new Map<string, T[]>();
   for (const task of tasks) {
     const relDir = path.relative(workspaceRoot, path.dirname(task.filePath));
-    const key =
-      relDir === "" || relDir === "." ? "" : relDir.split(path.sep).join("/");
+    const key = relDir === "" || relDir === "." ? "" : relDir.split(path.sep).join("/");
     const existing = groups.get(key) ?? [];
     existing.push(task);
     groups.set(key, existing);
@@ -38,10 +34,7 @@ export function groupByFullDir<T extends DirTaskInfo>(
 /**
  * Finds the closest parent directory among a set of directories.
  */
-function findClosestParent(
-  dir: string,
-  allDirs: readonly string[],
-): string | null {
+function findClosestParent(dir: string, allDirs: readonly string[]): string | null {
   let closest: string | null = null;
   for (const other of allDirs) {
     const isParent = other !== dir && dir.startsWith(`${other}/`);
@@ -55,9 +48,7 @@ function findClosestParent(
 /**
  * Builds parent-to-children directory mapping.
  */
-function buildChildrenMap(
-  sortedDirs: readonly string[],
-): Map<string | null, string[]> {
+function buildChildrenMap(sortedDirs: readonly string[]): Map<string | null, string[]> {
   const childrenMap = new Map<string | null, string[]>();
   for (const dir of sortedDirs) {
     const parent = findClosestParent(dir, sortedDirs);
@@ -74,7 +65,7 @@ function buildChildrenMap(
 function buildNode<T extends DirTaskInfo>(
   dir: string,
   groups: Map<string, T[]>,
-  childrenMap: Map<string | null, string[]>,
+  childrenMap: Map<string | null, string[]>
 ): DirNode<T> {
   const tasks = groups.get(dir) ?? [];
   const childDirs = childrenMap.get(dir) ?? [];
@@ -88,9 +79,7 @@ function buildNode<T extends DirTaskInfo>(
 /**
  * Builds nested directory tree from grouped tasks.
  */
-export function buildDirTree<T extends DirTaskInfo>(
-  groups: Map<string, T[]>,
-): Array<DirNode<T>> {
+export function buildDirTree<T extends DirTaskInfo>(groups: Map<string, T[]>): Array<DirNode<T>> {
   const sortedDirs = Array.from(groups.keys()).sort();
   const childrenMap = buildChildrenMap(sortedDirs);
   const rootDirs = childrenMap.get(null) ?? [];
@@ -100,10 +89,7 @@ export function buildDirTree<T extends DirTaskInfo>(
 /**
  * Decides whether a root-level DirNode needs a folder wrapper.
  */
-export function needsFolderWrapper<T extends DirTaskInfo>(
-  node: DirNode<T>,
-  totalRootNodes: number,
-): boolean {
+export function needsFolderWrapper<T extends DirTaskInfo>(node: DirNode<T>, totalRootNodes: number): boolean {
   if (node.subdirs.length > 0) {
     return true;
   }
@@ -129,9 +115,7 @@ export function simplifyDirLabel(relDir: string): string {
   }
   const first = parts[0];
   const last = parts[parts.length - 1];
-  return first !== undefined && last !== undefined
-    ? `${first}/.../${last}`
-    : relDir;
+  return first !== undefined && last !== undefined ? `${first}/.../${last}` : relDir;
 }
 
 /**

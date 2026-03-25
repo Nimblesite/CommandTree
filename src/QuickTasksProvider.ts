@@ -21,13 +21,9 @@ const QUICK_TAG = "quick";
  * Supports drag-and-drop reordering via display_order column.
  */
 export class QuickTasksProvider
-  implements
-    vscode.TreeDataProvider<CommandTreeItem>,
-    vscode.TreeDragAndDropController<CommandTreeItem>
+  implements vscode.TreeDataProvider<CommandTreeItem>, vscode.TreeDragAndDropController<CommandTreeItem>
 {
-  private readonly onDidChangeTreeDataEmitter = new vscode.EventEmitter<
-    CommandTreeItem | undefined
-  >();
+  private readonly onDidChangeTreeDataEmitter = new vscode.EventEmitter<CommandTreeItem | undefined>();
   readonly onDidChangeTreeData = this.onDidChangeTreeDataEmitter.event;
 
   readonly dropMimeTypes = [QUICK_TASK_MIME_TYPE];
@@ -101,15 +97,9 @@ export class QuickTasksProvider
    * Builds quick task tree items ordered by display_order from junction table.
    */
   private buildQuickItems(): CommandTreeItem[] {
-    const quickTasks = this.allTasks.filter((task) =>
-      task.tags.includes(QUICK_TAG),
-    );
+    const quickTasks = this.allTasks.filter((task) => task.tags.includes(QUICK_TAG));
     if (quickTasks.length === 0) {
-      return [
-        createPlaceholderNode(
-          "No quick commands - star commands to add them here",
-        ),
-      ];
+      return [createPlaceholderNode("No quick commands - star commands to add them here")];
     }
     const sorted = this.sortByDisplayOrder(quickTasks);
     return sorted.map((task) => createCommandNode(task));
@@ -153,28 +143,19 @@ export class QuickTasksProvider
   /**
    * Called when dragging starts.
    */
-  handleDrag(
-    source: readonly CommandTreeItem[],
-    dataTransfer: vscode.DataTransfer,
-  ): void {
+  handleDrag(source: readonly CommandTreeItem[], dataTransfer: vscode.DataTransfer): void {
     const taskItem = source[0];
     if (taskItem === undefined || !isCommandItem(taskItem.data)) {
       return;
     }
-    dataTransfer.set(
-      QUICK_TASK_MIME_TYPE,
-      new vscode.DataTransferItem(taskItem.data.id),
-    );
+    dataTransfer.set(QUICK_TASK_MIME_TYPE, new vscode.DataTransferItem(taskItem.data.id));
   }
 
   /**
    * SPEC: quick-launch
    * Called when dropping - reorders tasks in junction table.
    */
-  handleDrop(
-    target: CommandTreeItem | undefined,
-    dataTransfer: vscode.DataTransfer,
-  ): void {
+  handleDrop(target: CommandTreeItem | undefined, dataTransfer: vscode.DataTransfer): void {
     const draggedTask = this.extractDraggedTask(dataTransfer);
     if (draggedTask === undefined) {
       return;
@@ -199,14 +180,8 @@ export class QuickTasksProvider
       return;
     }
 
-    const targetData =
-      target !== undefined && isCommandItem(target.data)
-        ? target.data
-        : undefined;
-    const targetIndex =
-      targetData !== undefined
-        ? orderedIds.indexOf(targetData.id)
-        : orderedIds.length - 1;
+    const targetData = target !== undefined && isCommandItem(target.data) ? target.data : undefined;
+    const targetIndex = targetData !== undefined ? orderedIds.indexOf(targetData.id) : orderedIds.length - 1;
 
     if (targetIndex === -1 || currentIndex === targetIndex) {
       return;
@@ -224,7 +199,7 @@ export class QuickTasksProvider
                      SET display_order = ?
                      WHERE command_id = ?
                      AND tag_id = (SELECT tag_id FROM tags WHERE tag_name = ?)`,
-          [i, commandId, QUICK_TAG],
+          [i, commandId, QUICK_TAG]
         );
       }
     }
@@ -237,9 +212,7 @@ export class QuickTasksProvider
   /**
    * Extracts the dragged task from a data transfer.
    */
-  private extractDraggedTask(
-    dataTransfer: vscode.DataTransfer,
-  ): CommandItem | undefined {
+  private extractDraggedTask(dataTransfer: vscode.DataTransfer): CommandItem | undefined {
     const transferItem = dataTransfer.get(QUICK_TASK_MIME_TYPE);
     if (transferItem === undefined) {
       return undefined;
@@ -248,8 +221,6 @@ export class QuickTasksProvider
     if (draggedId === "") {
       return undefined;
     }
-    return this.allTasks.find(
-      (t) => t.id === draggedId && t.tags.includes(QUICK_TAG),
-    );
+    return this.allTasks.find((t) => t.id === draggedId && t.tags.includes(QUICK_TAG));
   }
 }

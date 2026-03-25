@@ -10,12 +10,7 @@ import * as assert from "assert";
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import {
-  activateExtension,
-  sleep,
-  getFixturePath,
-  getExtensionPath,
-} from "../helpers/helpers";
+import { activateExtension, sleep, getFixturePath, getExtensionPath } from "../helpers/helpers";
 
 interface ConfigurationProperty {
   default: unknown;
@@ -40,9 +35,7 @@ interface TagConfig {
 }
 
 function readExtensionPackageJson(): PackageJsonConfig {
-  return JSON.parse(
-    fs.readFileSync(getExtensionPath("package.json"), "utf8"),
-  ) as PackageJsonConfig;
+  return JSON.parse(fs.readFileSync(getExtensionPath("package.json"), "utf8")) as PackageJsonConfig;
 }
 
 // Spec: settings
@@ -62,24 +55,17 @@ suite("Configuration and File Watchers E2E Tests", () => {
       const excludePatterns = config.get<string[]>("excludePatterns");
 
       assert.ok(excludePatterns, "excludePatterns should exist");
-      assert.ok(
-        Array.isArray(excludePatterns),
-        "excludePatterns should be an array",
-      );
+      assert.ok(Array.isArray(excludePatterns), "excludePatterns should be an array");
     });
 
     test("excludePatterns has sensible defaults", function () {
       this.timeout(10000);
 
       const packageJson = readExtensionPackageJson();
-      const defaultPatterns = packageJson.contributes.configuration.properties[
-        "commandtree.excludePatterns"
-      ].default as string[];
+      const defaultPatterns = packageJson.contributes.configuration.properties["commandtree.excludePatterns"]
+        .default as string[];
 
-      assert.ok(
-        defaultPatterns.includes("**/node_modules/**"),
-        "Should exclude node_modules",
-      );
+      assert.ok(defaultPatterns.includes("**/node_modules/**"), "Should exclude node_modules");
       assert.ok(defaultPatterns.includes("**/bin/**"), "Should exclude bin");
       assert.ok(defaultPatterns.includes("**/obj/**"), "Should exclude obj");
       assert.ok(defaultPatterns.includes("**/.git/**"), "Should exclude .git");
@@ -91,20 +77,14 @@ suite("Configuration and File Watchers E2E Tests", () => {
       const config = vscode.workspace.getConfiguration("commandtree");
       const sortOrder = config.get<string>("sortOrder");
 
-      assert.ok(
-        sortOrder !== undefined && sortOrder !== "",
-        "sortOrder should exist",
-      );
+      assert.ok(sortOrder !== undefined && sortOrder !== "", "sortOrder should exist");
     });
 
     test("sortOrder has valid enum values", function () {
       this.timeout(10000);
 
       const packageJson = readExtensionPackageJson();
-      const enumValues =
-        packageJson.contributes.configuration.properties[
-          "commandtree.sortOrder"
-        ].enum;
+      const enumValues = packageJson.contributes.configuration.properties["commandtree.sortOrder"].enum;
 
       assert.ok(enumValues, "enum should exist");
       assert.ok(enumValues.includes("folder"), "Should have folder option");
@@ -116,16 +96,9 @@ suite("Configuration and File Watchers E2E Tests", () => {
       this.timeout(10000);
 
       const packageJson = readExtensionPackageJson();
-      const defaultValue =
-        packageJson.contributes.configuration.properties[
-          "commandtree.sortOrder"
-        ].default;
+      const defaultValue = packageJson.contributes.configuration.properties["commandtree.sortOrder"].default;
 
-      assert.strictEqual(
-        defaultValue,
-        "folder",
-        "sortOrder should default to folder",
-      );
+      assert.strictEqual(defaultValue, "folder", "sortOrder should default to folder");
     });
 
     test("sortOrder has descriptive enum descriptions", function () {
@@ -133,24 +106,13 @@ suite("Configuration and File Watchers E2E Tests", () => {
 
       const packageJson = readExtensionPackageJson();
       const enumDescriptions =
-        packageJson.contributes.configuration.properties[
-          "commandtree.sortOrder"
-        ].enumDescriptions;
+        packageJson.contributes.configuration.properties["commandtree.sortOrder"].enumDescriptions;
 
       assert.ok(enumDescriptions, "enumDescriptions should exist");
       assert.ok(enumDescriptions.length === 3, "Should have 3 descriptions");
-      assert.ok(
-        enumDescriptions[0]?.includes("folder") === true,
-        "First should describe folder",
-      );
-      assert.ok(
-        enumDescriptions[1]?.includes("name") === true,
-        "Second should describe name",
-      );
-      assert.ok(
-        enumDescriptions[2]?.includes("type") === true,
-        "Third should describe type",
-      );
+      assert.ok(enumDescriptions[0]?.includes("folder") === true, "First should describe folder");
+      assert.ok(enumDescriptions[1]?.includes("name") === true, "Second should describe name");
+      assert.ok(enumDescriptions[2]?.includes("type") === true, "Third should describe type");
     });
   });
 
@@ -162,10 +124,7 @@ suite("Configuration and File Watchers E2E Tests", () => {
       const config = vscode.workspace.getConfiguration("commandtree");
       const sortOrder = config.get<string>("sortOrder");
 
-      assert.ok(
-        ["folder", "name", "type"].includes(sortOrder ?? ""),
-        "sortOrder should have valid value",
-      );
+      assert.ok(["folder", "name", "type"].includes(sortOrder ?? ""), "sortOrder should have valid value");
     });
 
     test("workspace settings are read correctly", function () {
@@ -176,10 +135,7 @@ suite("Configuration and File Watchers E2E Tests", () => {
       const excludePatterns = config.get<string[]>("excludePatterns");
       const sortOrder = config.get<string>("sortOrder");
 
-      assert.ok(
-        excludePatterns !== undefined,
-        "excludePatterns should be readable",
-      );
+      assert.ok(excludePatterns !== undefined, "excludePatterns should be readable");
       assert.ok(sortOrder !== undefined, "sortOrder should be readable");
     });
 
@@ -191,7 +147,7 @@ suite("Configuration and File Watchers E2E Tests", () => {
       assert.strictEqual(
         packageJson.contributes.configuration.title,
         "CommandTree",
-        "Configuration title should be CommandTree",
+        "Configuration title should be CommandTree"
       );
     });
   });
@@ -201,28 +157,18 @@ suite("Configuration and File Watchers E2E Tests", () => {
     test("tag config file has correct structure", function () {
       this.timeout(10000);
 
-      const tagConfig = JSON.parse(
-        fs.readFileSync(getFixturePath(".vscode/commandtree.json"), "utf8"),
-      ) as TagConfig;
+      const tagConfig = JSON.parse(fs.readFileSync(getFixturePath(".vscode/commandtree.json"), "utf8")) as TagConfig;
 
-      assert.ok(
-        typeof tagConfig.tags === "object",
-        "Should have tags property as object",
-      );
+      assert.ok(typeof tagConfig.tags === "object", "Should have tags property as object");
     });
 
     test("tag patterns are arrays", function () {
       this.timeout(10000);
 
-      const tagConfig = JSON.parse(
-        fs.readFileSync(getFixturePath(".vscode/commandtree.json"), "utf8"),
-      ) as TagConfig;
+      const tagConfig = JSON.parse(fs.readFileSync(getFixturePath(".vscode/commandtree.json"), "utf8")) as TagConfig;
 
       for (const [tagName, patterns] of Object.entries(tagConfig.tags)) {
-        assert.ok(
-          Array.isArray(patterns),
-          `Tag ${tagName} patterns should be an array`,
-        );
+        assert.ok(Array.isArray(patterns), `Tag ${tagName} patterns should be an array`);
       }
     });
   });
@@ -233,15 +179,11 @@ suite("Configuration and File Watchers E2E Tests", () => {
       this.timeout(10000);
 
       const packageJson = readExtensionPackageJson();
-      const patterns = packageJson.contributes.configuration.properties[
-        "commandtree.excludePatterns"
-      ].default as string[];
+      const patterns = packageJson.contributes.configuration.properties["commandtree.excludePatterns"]
+        .default as string[];
 
       for (const pattern of patterns) {
-        assert.ok(
-          pattern.includes("**"),
-          `Pattern ${pattern} should use ** glob`,
-        );
+        assert.ok(pattern.includes("**"), `Pattern ${pattern} should use ** glob`);
       }
     });
 
@@ -268,10 +210,7 @@ suite("Configuration and File Watchers E2E Tests", () => {
       const folders = vscode.workspace.workspaceFolders;
 
       assert.ok(folders, "Should have workspace folders");
-      assert.ok(
-        folders.length >= 1,
-        "Should have at least one workspace folder",
-      );
+      assert.ok(folders.length >= 1, "Should have at least one workspace folder");
     });
 
     test("reads config from workspace root", function () {

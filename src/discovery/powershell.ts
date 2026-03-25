@@ -1,12 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import type {
-  CommandItem,
-  ParamDef,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, ParamDef, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId, simplifyPath } from "../models/TaskItem";
 import { readFile } from "../utils/fileUtils";
 
@@ -24,7 +18,7 @@ export const CATEGORY_DEF: CategoryDef = {
  */
 export async function discoverPowerShellScripts(
   workspaceRoot: string,
-  excludePatterns: string[],
+  excludePatterns: string[]
 ): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
   const [ps1Files, batFiles, cmdFiles] = await Promise.all([
@@ -47,18 +41,14 @@ export async function discoverPowerShellScripts(
     const isPowerShell = ext === ".ps1";
 
     const params = isPowerShell ? parsePowerShellParams(content) : [];
-    const description = isPowerShell
-      ? parsePowerShellDescription(content)
-      : parseBatchDescription(content);
+    const description = isPowerShell ? parsePowerShellDescription(content) : parseBatchDescription(content);
 
     const task: MutableCommandItem = {
       id: generateCommandId("powershell", file.fsPath, name),
       label: name,
       type: "powershell",
       category: simplifyPath(file.fsPath, workspaceRoot),
-      command: isPowerShell
-        ? `powershell -File "${file.fsPath}"`
-        : `"${file.fsPath}"`,
+      command: isPowerShell ? `powershell -File "${file.fsPath}"` : `"${file.fsPath}"`,
       cwd: path.dirname(file.fsPath),
       filePath: file.fsPath,
       tags: [],
@@ -99,9 +89,7 @@ function parsePowerShellParams(content: string): ParamDef[] {
     const param: ParamDef = {
       name: paramName,
       description: descText.replace(/\(default:[^)]+\)/i, "").trim(),
-      ...(defaultVal !== undefined && defaultVal !== ""
-        ? { default: defaultVal }
-        : {}),
+      ...(defaultVal !== undefined && defaultVal !== "" ? { default: defaultVal } : {}),
     };
     params.push(param);
   }

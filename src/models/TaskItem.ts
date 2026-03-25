@@ -136,9 +136,7 @@ export type NodeData = CommandItem | CategoryNode | FolderNode;
 /**
  * Type guard: true when data is a CommandItem (command leaf).
  */
-export function isCommandItem(
-  data: NodeData | null | undefined,
-): data is CommandItem {
+export function isCommandItem(data: NodeData | null | undefined): data is CommandItem {
   return data !== null && data !== undefined && !("nodeType" in data);
 }
 
@@ -167,9 +165,7 @@ export class CommandTreeItem extends vscode.TreeItem {
   constructor(props: CommandTreeItemProps) {
     super(
       props.label,
-      props.children.length > 0
-        ? vscode.TreeItemCollapsibleState.Collapsed
-        : vscode.TreeItemCollapsibleState.None,
+      props.children.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None
     );
     this.data = props.data;
     this.children = props.children;
@@ -213,10 +209,6 @@ export function simplifyPath(filePath: string, workspaceRoot: string): string {
 /**
  * Generates a unique ID for a command.
  */
-export function generateCommandId(
-  type: CommandType,
-  filePath: string,
-  name: string,
-): string {
+export function generateCommandId(type: CommandType, filePath: string, name: string): string {
   return `${type}:${filePath}:${name}`;
 }

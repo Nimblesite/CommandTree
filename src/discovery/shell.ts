@@ -1,12 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import type {
-  CommandItem,
-  ParamDef,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, ParamDef, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId, simplifyPath } from "../models/TaskItem";
 import { readFile } from "../utils/fileUtils";
 
@@ -24,10 +18,7 @@ export const CATEGORY_DEF: CategoryDef = {
  *
  * Discovers shell scripts (.sh files) in the workspace.
  */
-export async function discoverShellScripts(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverShellScripts(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
   const files = await vscode.workspace.findFiles("**/*.sh", exclude);
   const commands: CommandItem[] = [];
@@ -87,9 +78,7 @@ function parseShellParams(content: string): ParamDef[] {
     const param: ParamDef = {
       name: paramName,
       description: descText.replace(/\(default:[^)]+\)/i, "").trim(),
-      ...(defaultVal !== undefined && defaultVal !== ""
-        ? { default: defaultVal }
-        : {}),
+      ...(defaultVal !== undefined && defaultVal !== "" ? { default: defaultVal } : {}),
     };
     params.push(param);
   }

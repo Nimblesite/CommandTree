@@ -1,10 +1,5 @@
 import * as vscode from "vscode";
-import type {
-  CommandItem,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId } from "../models/TaskItem";
 import { readJsonFile } from "../utils/fileUtils";
 
@@ -32,15 +27,9 @@ interface LaunchJson {
  *
  * Discovers VS Code launch configurations.
  */
-export async function discoverLaunchConfigs(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverLaunchConfigs(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
-  const files = await vscode.workspace.findFiles(
-    "**/.vscode/launch.json",
-    exclude,
-  );
+  const files = await vscode.workspace.findFiles("**/.vscode/launch.json", exclude);
   const commands: CommandItem[] = [];
 
   for (const file of files) {
@@ -50,10 +39,7 @@ export async function discoverLaunchConfigs(
     }
 
     const launch = result.value;
-    if (
-      launch.configurations === undefined ||
-      !Array.isArray(launch.configurations)
-    ) {
+    if (launch.configurations === undefined || !Array.isArray(launch.configurations)) {
       continue;
     }
 

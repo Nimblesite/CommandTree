@@ -1,12 +1,7 @@
 import type { CommandItem } from "../models/TaskItem";
 import type { CommandTreeItem } from "../models/TaskItem";
 import type { DirNode } from "./dirTree";
-import {
-  groupByFullDir,
-  buildDirTree,
-  needsFolderWrapper,
-  getFolderLabel,
-} from "./dirTree";
+import { groupByFullDir, buildDirTree, needsFolderWrapper, getFolderLabel } from "./dirTree";
 import { createCommandNode, createFolderNode } from "./nodeFactory";
 
 /**
@@ -32,7 +27,7 @@ function renderFolder({
       parentDir: node.dir,
       parentTreeId: folderId,
       sortTasks,
-    }),
+    })
   );
   return createFolderNode({
     label,
@@ -68,7 +63,7 @@ export function buildNestedFolderItems({
             parentDir: "",
             parentTreeId: categoryId,
             sortTasks,
-          }),
+          })
         );
       }
       result.push(...sortTasks(node.tasks).map((t) => createCommandNode(t)));
@@ -79,7 +74,7 @@ export function buildNestedFolderItems({
           parentDir: "",
           parentTreeId: categoryId,
           sortTasks,
-        }),
+        })
       );
     } else {
       result.push(...sortTasks(node.tasks).map((t) => createCommandNode(t)));

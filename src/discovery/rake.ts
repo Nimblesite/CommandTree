@@ -1,11 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import type {
-  CommandItem,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId, simplifyPath } from "../models/TaskItem";
 import { readFile } from "../utils/fileUtils";
 
@@ -16,10 +11,7 @@ export const CATEGORY_DEF: CategoryDef = { type: "rake", label: "Rake Tasks" };
  * Discovers Rake tasks from Rakefile.
  * Only returns tasks if Ruby source files (.rb) exist in the workspace.
  */
-export async function discoverRakeTasks(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverRakeTasks(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
 
   // Check if any Ruby source files exist before processing
@@ -29,19 +21,13 @@ export async function discoverRakeTasks(
   }
 
   // Rake supports: Rakefile, rakefile, Rakefile.rb, rakefile.rb
-  const [rakefiles, lcRakefiles, rbRakefiles, lcRbRakefiles] =
-    await Promise.all([
-      vscode.workspace.findFiles("**/Rakefile", exclude),
-      vscode.workspace.findFiles("**/rakefile", exclude),
-      vscode.workspace.findFiles("**/Rakefile.rb", exclude),
-      vscode.workspace.findFiles("**/rakefile.rb", exclude),
-    ]);
-  const allFiles = [
-    ...rakefiles,
-    ...lcRakefiles,
-    ...rbRakefiles,
-    ...lcRbRakefiles,
-  ];
+  const [rakefiles, lcRakefiles, rbRakefiles, lcRbRakefiles] = await Promise.all([
+    vscode.workspace.findFiles("**/Rakefile", exclude),
+    vscode.workspace.findFiles("**/rakefile", exclude),
+    vscode.workspace.findFiles("**/Rakefile.rb", exclude),
+    vscode.workspace.findFiles("**/rakefile.rb", exclude),
+  ]);
+  const allFiles = [...rakefiles, ...lcRakefiles, ...rbRakefiles, ...lcRbRakefiles];
   const commands: CommandItem[] = [];
 
   for (const file of allFiles) {
@@ -106,9 +92,7 @@ function parseRakeTasks(content: string): RakeTask[] {
       if (name !== undefined && name !== "") {
         tasks.push({
           name,
-          ...(pendingDesc !== undefined && pendingDesc !== ""
-            ? { description: pendingDesc }
-            : {}),
+          ...(pendingDesc !== undefined && pendingDesc !== "" ? { description: pendingDesc } : {}),
         });
       }
       pendingDesc = undefined;

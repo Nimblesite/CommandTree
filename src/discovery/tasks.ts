@@ -1,11 +1,5 @@
 import * as vscode from "vscode";
-import type {
-  CommandItem,
-  ParamDef,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, ParamDef, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId } from "../models/TaskItem";
 import { readJsonFile } from "../utils/fileUtils";
 
@@ -40,15 +34,9 @@ interface TasksJsonConfig {
  *
  * Discovers VS Code tasks from tasks.json.
  */
-export async function discoverVsCodeTasks(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverVsCodeTasks(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
-  const files = await vscode.workspace.findFiles(
-    "**/.vscode/tasks.json",
-    exclude,
-  );
+  const files = await vscode.workspace.findFiles("**/.vscode/tasks.json", exclude);
   const commands: CommandItem[] = [];
 
   for (const file of files) {
@@ -66,11 +54,7 @@ export async function discoverVsCodeTasks(
 
     for (const task of tasksConfig.tasks) {
       let label = task.label;
-      if (
-        label === undefined &&
-        task.type === "npm" &&
-        task.script !== undefined
-      ) {
+      if (label === undefined && task.type === "npm" && task.script !== undefined) {
         label = `npm: ${task.script}`;
       }
       if (label === undefined) {
@@ -92,11 +76,7 @@ export async function discoverVsCodeTasks(
       if (taskParams.length > 0) {
         taskItem.params = taskParams;
       }
-      if (
-        task.detail !== undefined &&
-        typeof task.detail === "string" &&
-        task.detail !== ""
-      ) {
+      if (task.detail !== undefined && typeof task.detail === "string" && task.detail !== "") {
         taskItem.description = task.detail;
       }
       commands.push(taskItem);
@@ -118,9 +98,7 @@ function parseInputs(inputs: TaskInput[] | undefined): Map<string, ParamDef> {
   for (const input of inputs) {
     const param: ParamDef = {
       name: input.id,
-      ...(input.description !== undefined
-        ? { description: input.description }
-        : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
       ...(input.default !== undefined ? { default: input.default } : {}),
       ...(input.options !== undefined ? { options: input.options } : {}),
     };
@@ -133,10 +111,7 @@ function parseInputs(inputs: TaskInput[] | undefined): Map<string, ParamDef> {
 /**
  * Finds input references in a task definition.
  */
-function findTaskInputs(
-  task: VscodeTaskDef,
-  inputs: Map<string, ParamDef>,
-): ParamDef[] {
+function findTaskInputs(task: VscodeTaskDef, inputs: Map<string, ParamDef>): ParamDef[] {
   const params: ParamDef[] = [];
   const taskStr = JSON.stringify(task);
 

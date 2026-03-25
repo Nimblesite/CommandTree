@@ -114,4 +114,3 @@ export function parseLaunchJson(content: string): LaunchJson {
 export function parseCommandTreeJson(content: string): CommandTreeJson {
   return JSON.parse(content) as CommandTreeJson;
 }
-

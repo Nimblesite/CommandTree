@@ -1,12 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import type {
-  CommandItem,
-  ParamDef,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, ParamDef, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId, simplifyPath } from "../models/TaskItem";
 import { readFile } from "../utils/fileUtils";
 
@@ -24,10 +18,7 @@ export const CATEGORY_DEF: CategoryDef = {
  *
  * Discovers Python scripts (.py files) in the workspace.
  */
-export async function discoverPythonScripts(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverPythonScripts(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
   const files = await vscode.workspace.findFiles("**/*.py", exclude);
   const commands: CommandItem[] = [];
@@ -112,16 +103,13 @@ function parsePythonParams(content: string): ParamDef[] {
     const param: ParamDef = {
       name: paramName,
       description: descText.replace(/\(default:[^)]+\)/i, "").trim(),
-      ...(defaultVal !== undefined && defaultVal !== ""
-        ? { default: defaultVal }
-        : {}),
+      ...(defaultVal !== undefined && defaultVal !== "" ? { default: defaultVal } : {}),
     };
     params.push(param);
   }
 
   // Parse argparse arguments
-  const argparseRegex =
-    /add_argument\s*\(\s*['"]--?(\w+)['"]\s*(?:,\s*[^)]*help\s*=\s*['"]([^'"]+)['"])?/g;
+  const argparseRegex = /add_argument\s*\(\s*['"]--?(\w+)['"]\s*(?:,\s*[^)]*help\s*=\s*['"]([^'"]+)['"])?/g;
   while ((match = argparseRegex.exec(content)) !== null) {
     const argName = match[1];
     const helpText = match[2];
@@ -136,9 +124,7 @@ function parsePythonParams(content: string): ParamDef[] {
 
     const param: ParamDef = {
       name: argName,
-      ...(helpText !== undefined && helpText !== ""
-        ? { description: helpText }
-        : {}),
+      ...(helpText !== undefined && helpText !== "" ? { description: helpText } : {}),
     };
     params.push(param);
   }
@@ -160,11 +146,7 @@ function parsePythonDescription(content: string): string | undefined {
     const trimmed = line.trim();
 
     // Skip shebang and encoding declarations
-    if (
-      trimmed.startsWith("#!") ||
-      trimmed.startsWith("# -*-") ||
-      trimmed.startsWith("# coding")
-    ) {
+    if (trimmed.startsWith("#!") || trimmed.startsWith("# -*-") || trimmed.startsWith("# coding")) {
       continue;
     }
 

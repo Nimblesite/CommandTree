@@ -26,20 +26,14 @@ suite("Command Filtering E2E Tests", () => {
       this.timeout(10000);
 
       const commands = await vscode.commands.getCommands(true);
-      assert.ok(
-        commands.includes("commandtree.clearFilter"),
-        "clearFilter command should be registered",
-      );
+      assert.ok(commands.includes("commandtree.clearFilter"), "clearFilter command should be registered");
     });
 
     test("filterByTag command is registered", async function () {
       this.timeout(10000);
 
       const commands = await vscode.commands.getCommands(true);
-      assert.ok(
-        commands.includes("commandtree.filterByTag"),
-        "filterByTag command should be registered",
-      );
+      assert.ok(commands.includes("commandtree.filterByTag"), "filterByTag command should be registered");
     });
   });
 });

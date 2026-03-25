@@ -1,11 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import type {
-  CommandItem,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId, simplifyPath } from "../models/TaskItem";
 import { readFile } from "../utils/fileUtils";
 
@@ -21,10 +16,7 @@ export const CATEGORY_DEF: CategoryDef = {
 /**
  * Discovers tasks from Taskfile.yml (go-task).
  */
-export async function discoverTaskfileTasks(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverTaskfileTasks(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
   // Taskfile supports: Taskfile.yml, Taskfile.yaml, taskfile.yml, taskfile.yaml
   const [yml1, yaml1, yml2, yaml2] = await Promise.all([
@@ -133,9 +125,7 @@ function parseTaskfileTasks(content: string): TaskfileTask[] {
 
     // Check for desc or description field
     if (currentTask !== undefined && indent > taskIndent) {
-      const descMatch = /^(?:desc|description):\s*["']?(.+?)["']?\s*$/.exec(
-        trimmed,
-      );
+      const descMatch = /^(?:desc|description):\s*["']?(.+?)["']?\s*$/.exec(trimmed);
       if (descMatch !== null) {
         const description = descMatch[1];
         if (description !== undefined && description !== "") {

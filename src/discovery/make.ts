@@ -18,10 +18,7 @@ export const CATEGORY_DEF: CategoryDef = {
  *
  * Discovers make targets from Makefiles.
  */
-export async function discoverMakeTargets(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverMakeTargets(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
   // Look for Makefile, makefile, GNUmakefile
   const files = await vscode.workspace.findFiles("**/[Mm]akefile", exclude);

@@ -26,8 +26,7 @@ export interface SummaryResult {
 
 const ANALYSIS_TOOL: vscode.LanguageModelChatTool = {
   name: TOOL_NAME,
-  description:
-    "Report the analysis of a command including summary and any security warnings",
+  description: "Report the analysis of a command including summary and any security warnings",
   inputSchema: {
     type: "object",
     properties: {
@@ -57,9 +56,7 @@ async function delay(ms: number): Promise<void> {
 /**
  * Fetches Copilot models with retry, optionally filtering by ID.
  */
-async function fetchModels(
-  selector: vscode.LanguageModelChatSelector,
-): Promise<readonly vscode.LanguageModelChat[]> {
+async function fetchModels(selector: vscode.LanguageModelChatSelector): Promise<readonly vscode.LanguageModelChat[]> {
   for (let attempt = 0; attempt < MODEL_RETRY_COUNT; attempt++) {
     try {
       const models = await vscode.lm.selectChatModels(selector);
@@ -92,7 +89,7 @@ function formatModelDetail(m: vscode.LanguageModelChat): string {
  * Returns the chosen model ref, or undefined if cancelled.
  */
 async function promptModelPicker(
-  models: readonly vscode.LanguageModelChat[],
+  models: readonly vscode.LanguageModelChat[]
 ): Promise<vscode.LanguageModelChat | undefined> {
   const items = models.map((m) => ({
     label: m.name,
@@ -116,16 +113,12 @@ function buildVSCodeDeps(): ModelSelectionDeps {
   const config = vscode.workspace.getConfiguration("commandtree");
   return {
     getSavedId: (): string => config.get<string>("aiModel", ""),
-    fetchById: async (id: string): Promise<readonly ModelRef[]> =>
-      await fetchModels({ vendor: "copilot", id }),
-    fetchAll: async (): Promise<readonly ModelRef[]> =>
-      await fetchModels({ vendor: "copilot" }),
+    fetchById: async (id: string): Promise<readonly ModelRef[]> => await fetchModels({ vendor: "copilot", id }),
+    fetchAll: async (): Promise<readonly ModelRef[]> => await fetchModels({ vendor: "copilot" }),
     promptUser: async (): Promise<ModelRef | undefined> => {
       const all = await fetchModels({ vendor: "copilot" });
       const picked = await promptModelPicker(all);
-      return picked !== undefined
-        ? { id: picked.id, name: picked.name }
-        : undefined;
+      return picked !== undefined ? { id: picked.id, name: picked.name } : undefined;
     },
     saveId: async (id: string): Promise<void> => {
       await config.update("aiModel", id, vscode.ConfigurationTarget.Global);
@@ -137,9 +130,7 @@ function buildVSCodeDeps(): ModelSelectionDeps {
  * Selects the configured model by ID, or prompts the user to pick one.
  * When "auto" is selected, uses the Copilot auto model directly.
  */
-export async function selectCopilotModel(): Promise<
-  Result<vscode.LanguageModelChat, string>
-> {
+export async function selectCopilotModel(): Promise<Result<vscode.LanguageModelChat, string>> {
   const result = await resolveModel(buildVSCodeDeps());
   if (!result.ok) {
     return result;
@@ -165,9 +156,9 @@ export async function selectCopilotModel(): Promise<
 
   logger.info("Resolved model for requests", {
     selected: result.value.id,
-    resolved: model.id,
+    resolved: resolved.id,
   });
-  return ok(model);
+  return ok(resolved);
 }
 
 /**
@@ -197,18 +188,12 @@ export async function forceSelectModel(): Promise<Result<string, string>> {
 /**
  * Extracts the tool call result from the LLM response stream.
  */
-async function extractToolCall(
-  response: vscode.LanguageModelChatResponse,
-): Promise<SummaryResult | null> {
+async function extractToolCall(response: vscode.LanguageModelChatResponse): Promise<SummaryResult | null> {
   for await (const part of response.stream) {
     if (part instanceof vscode.LanguageModelToolCallPart) {
       const input = part.input as Record<string, unknown>;
-      const summary =
-        typeof input["summary"] === "string" ? input["summary"] : "";
-      const warning =
-        typeof input["securityWarning"] === "string"
-          ? input["securityWarning"]
-          : "";
+      const summary = typeof input["summary"] === "string" ? input["summary"] : "";
+      const warning = typeof input["securityWarning"] === "string" ? input["securityWarning"] : "";
       return { summary, securityWarning: warning };
     }
   }
@@ -220,7 +205,7 @@ async function extractToolCall(
  */
 async function sendToolRequest(
   model: vscode.LanguageModelChat,
-  prompt: string,
+  prompt: string
 ): Promise<Result<SummaryResult, string>> {
   try {
     const messages = [vscode.LanguageModelChatMessage.User(prompt)];
@@ -228,11 +213,7 @@ async function sendToolRequest(
       tools: [ANALYSIS_TOOL],
       toolMode: vscode.LanguageModelChatToolMode.Required,
     };
-    const response = await model.sendRequest(
-      messages,
-      options,
-      new vscode.CancellationTokenSource().token,
-    );
+    const response = await model.sendRequest(messages, options, new vscode.CancellationTokenSource().token);
     const result = await extractToolCall(response);
     if (result === null) {
       return err("No tool call in LLM response");
@@ -254,9 +235,7 @@ function buildSummaryPrompt(params: {
   readonly content: string;
 }): string {
   const truncated =
-    params.content.length > MAX_CONTENT_LENGTH
-      ? params.content.substring(0, MAX_CONTENT_LENGTH)
-      : params.content;
+    params.content.length > MAX_CONTENT_LENGTH ? params.content.substring(0, MAX_CONTENT_LENGTH) : params.content;
 
   return [
     `Analyse this ${params.type} command. Provide a plain-language summary (1-2 sentences).`,

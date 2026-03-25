@@ -4,9 +4,7 @@
  */
 
 /** Inline Result type to avoid importing TaskItem (which depends on vscode). */
-type Result<T, E> =
-  | { readonly ok: true; readonly value: T }
-  | { readonly ok: false; readonly error: E };
+type Result<T, E> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: E };
 const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
 const err = <E>(error: E): Result<never, E> => ({ ok: false, error });
 
@@ -24,9 +22,7 @@ export interface ModelSelectionDeps {
   readonly getSavedId: () => string;
   readonly fetchById: (id: string) => Promise<readonly ModelRef[]>;
   readonly fetchAll: () => Promise<readonly ModelRef[]>;
-  readonly promptUser: (
-    models: readonly ModelRef[],
-  ) => Promise<ModelRef | undefined>;
+  readonly promptUser: (models: readonly ModelRef[]) => Promise<ModelRef | undefined>;
   readonly saveId: (id: string) => Promise<void>;
 }
 
@@ -40,9 +36,7 @@ export function pickConcreteModel(params: {
   readonly preferredId: string;
 }): ModelRef | undefined {
   if (params.preferredId === AUTO_MODEL_ID) {
-    return (
-      params.models.find((m) => m.id !== AUTO_MODEL_ID) ?? params.models[0]
-    );
+    return params.models.find((m) => m.id !== AUTO_MODEL_ID) ?? params.models[0];
   }
   return params.models.find((m) => m.id === params.preferredId);
 }
@@ -51,9 +45,7 @@ export function pickConcreteModel(params: {
  * Pure model selection logic. Uses saved setting if available,
  * otherwise prompts user and persists the choice.
  */
-export async function resolveModel(
-  deps: ModelSelectionDeps,
-): Promise<Result<ModelRef, string>> {
+export async function resolveModel(deps: ModelSelectionDeps): Promise<Result<ModelRef, string>> {
   const savedId = deps.getSavedId();
 
   if (savedId !== "") {

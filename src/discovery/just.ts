@@ -1,12 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import type {
-  CommandItem,
-  ParamDef,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, ParamDef, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId, simplifyPath } from "../models/TaskItem";
 import { readFile } from "../utils/fileUtils";
 
@@ -22,10 +16,7 @@ export const CATEGORY_DEF: CategoryDef = {
 /**
  * Discovers Just recipes from justfile.
  */
-export async function discoverJustRecipes(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverJustRecipes(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
   // Just supports: justfile, Justfile, .justfile
   const [justfiles, Justfiles, dotJustfiles] = await Promise.all([
@@ -116,9 +107,7 @@ function parseJustRecipes(content: string): JustRecipe[] {
       recipes.push({
         name,
         params,
-        ...(pendingComment !== undefined && pendingComment !== ""
-          ? { description: pendingComment }
-          : {}),
+        ...(pendingComment !== undefined && pendingComment !== "" ? { description: pendingComment } : {}),
       });
 
       pendingComment = undefined;
@@ -152,9 +141,7 @@ function parseJustParams(paramsStr: string): ParamDef[] {
       if (paramName !== undefined) {
         params.push({
           name: paramName,
-          ...(defaultVal !== undefined && defaultVal !== ""
-            ? { default: defaultVal }
-            : {}),
+          ...(defaultVal !== undefined && defaultVal !== "" ? { default: defaultVal } : {}),
         });
       }
     } else if (/^\w+$/.test(part)) {

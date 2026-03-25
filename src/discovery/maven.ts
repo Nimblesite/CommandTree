@@ -28,10 +28,7 @@ const STANDARD_MAVEN_GOALS = [
  * Discovers Maven goals from pom.xml files.
  * Only returns tasks if Java source files (.java) exist in the workspace.
  */
-export async function discoverMavenGoals(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverMavenGoals(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
 
   // Check if any Java source files exist before processing

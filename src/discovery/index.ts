@@ -1,105 +1,24 @@
 import * as vscode from "vscode";
-import type {
-  CommandItem,
-  CommandType,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
-import {
-  discoverShellScripts,
-  ICON_DEF as SHELL_ICON,
-  CATEGORY_DEF as SHELL_CAT,
-} from "./shell";
-import {
-  discoverNpmScripts,
-  ICON_DEF as NPM_ICON,
-  CATEGORY_DEF as NPM_CAT,
-} from "./npm";
-import {
-  discoverMakeTargets,
-  ICON_DEF as MAKE_ICON,
-  CATEGORY_DEF as MAKE_CAT,
-} from "./make";
-import {
-  discoverLaunchConfigs,
-  ICON_DEF as LAUNCH_ICON,
-  CATEGORY_DEF as LAUNCH_CAT,
-} from "./launch";
-import {
-  discoverVsCodeTasks,
-  ICON_DEF as VSCODE_ICON,
-  CATEGORY_DEF as VSCODE_CAT,
-} from "./tasks";
-import {
-  discoverPythonScripts,
-  ICON_DEF as PYTHON_ICON,
-  CATEGORY_DEF as PYTHON_CAT,
-} from "./python";
-import {
-  discoverPowerShellScripts,
-  ICON_DEF as POWERSHELL_ICON,
-  CATEGORY_DEF as POWERSHELL_CAT,
-} from "./powershell";
-import {
-  discoverGradleTasks,
-  ICON_DEF as GRADLE_ICON,
-  CATEGORY_DEF as GRADLE_CAT,
-} from "./gradle";
-import {
-  discoverCargoTasks,
-  ICON_DEF as CARGO_ICON,
-  CATEGORY_DEF as CARGO_CAT,
-} from "./cargo";
-import {
-  discoverMavenGoals,
-  ICON_DEF as MAVEN_ICON,
-  CATEGORY_DEF as MAVEN_CAT,
-} from "./maven";
-import {
-  discoverAntTargets,
-  ICON_DEF as ANT_ICON,
-  CATEGORY_DEF as ANT_CAT,
-} from "./ant";
-import {
-  discoverJustRecipes,
-  ICON_DEF as JUST_ICON,
-  CATEGORY_DEF as JUST_CAT,
-} from "./just";
-import {
-  discoverTaskfileTasks,
-  ICON_DEF as TASKFILE_ICON,
-  CATEGORY_DEF as TASKFILE_CAT,
-} from "./taskfile";
-import {
-  discoverDenoTasks,
-  ICON_DEF as DENO_ICON,
-  CATEGORY_DEF as DENO_CAT,
-} from "./deno";
-import {
-  discoverRakeTasks,
-  ICON_DEF as RAKE_ICON,
-  CATEGORY_DEF as RAKE_CAT,
-} from "./rake";
-import {
-  discoverComposerScripts,
-  ICON_DEF as COMPOSER_ICON,
-  CATEGORY_DEF as COMPOSER_CAT,
-} from "./composer";
-import {
-  discoverDockerComposeServices,
-  ICON_DEF as DOCKER_ICON,
-  CATEGORY_DEF as DOCKER_CAT,
-} from "./docker";
-import {
-  discoverDotnetProjects,
-  ICON_DEF as DOTNET_ICON,
-  CATEGORY_DEF as DOTNET_CAT,
-} from "./dotnet";
-import {
-  discoverMarkdownFiles,
-  ICON_DEF as MARKDOWN_ICON,
-  CATEGORY_DEF as MARKDOWN_CAT,
-} from "./markdown";
+import type { CommandItem, CommandType, IconDef, CategoryDef } from "../models/TaskItem";
+import { discoverShellScripts, ICON_DEF as SHELL_ICON, CATEGORY_DEF as SHELL_CAT } from "./shell";
+import { discoverNpmScripts, ICON_DEF as NPM_ICON, CATEGORY_DEF as NPM_CAT } from "./npm";
+import { discoverMakeTargets, ICON_DEF as MAKE_ICON, CATEGORY_DEF as MAKE_CAT } from "./make";
+import { discoverLaunchConfigs, ICON_DEF as LAUNCH_ICON, CATEGORY_DEF as LAUNCH_CAT } from "./launch";
+import { discoverVsCodeTasks, ICON_DEF as VSCODE_ICON, CATEGORY_DEF as VSCODE_CAT } from "./tasks";
+import { discoverPythonScripts, ICON_DEF as PYTHON_ICON, CATEGORY_DEF as PYTHON_CAT } from "./python";
+import { discoverPowerShellScripts, ICON_DEF as POWERSHELL_ICON, CATEGORY_DEF as POWERSHELL_CAT } from "./powershell";
+import { discoverGradleTasks, ICON_DEF as GRADLE_ICON, CATEGORY_DEF as GRADLE_CAT } from "./gradle";
+import { discoverCargoTasks, ICON_DEF as CARGO_ICON, CATEGORY_DEF as CARGO_CAT } from "./cargo";
+import { discoverMavenGoals, ICON_DEF as MAVEN_ICON, CATEGORY_DEF as MAVEN_CAT } from "./maven";
+import { discoverAntTargets, ICON_DEF as ANT_ICON, CATEGORY_DEF as ANT_CAT } from "./ant";
+import { discoverJustRecipes, ICON_DEF as JUST_ICON, CATEGORY_DEF as JUST_CAT } from "./just";
+import { discoverTaskfileTasks, ICON_DEF as TASKFILE_ICON, CATEGORY_DEF as TASKFILE_CAT } from "./taskfile";
+import { discoverDenoTasks, ICON_DEF as DENO_ICON, CATEGORY_DEF as DENO_CAT } from "./deno";
+import { discoverRakeTasks, ICON_DEF as RAKE_ICON, CATEGORY_DEF as RAKE_CAT } from "./rake";
+import { discoverComposerScripts, ICON_DEF as COMPOSER_ICON, CATEGORY_DEF as COMPOSER_CAT } from "./composer";
+import { discoverDockerComposeServices, ICON_DEF as DOCKER_ICON, CATEGORY_DEF as DOCKER_CAT } from "./docker";
+import { discoverDotnetProjects, ICON_DEF as DOTNET_ICON, CATEGORY_DEF as DOTNET_CAT } from "./dotnet";
+import { discoverMarkdownFiles, ICON_DEF as MARKDOWN_ICON, CATEGORY_DEF as MARKDOWN_CAT } from "./markdown";
 import { logger } from "../utils/logger";
 
 export const ICON_REGISTRY: Record<CommandType, IconDef> = {
@@ -171,10 +90,7 @@ export interface DiscoveryResult {
 /**
  * Discovers all tasks from all sources.
  */
-export async function discoverAllTasks(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<DiscoveryResult> {
+export async function discoverAllTasks(workspaceRoot: string, excludePatterns: string[]): Promise<DiscoveryResult> {
   logger.info("Discovery started", { workspaceRoot });
 
   // Run all discoveries in parallel
@@ -300,12 +216,5 @@ export function flattenTasks(result: DiscoveryResult): CommandItem[] {
  */
 export function getExcludePatterns(): string[] {
   const config = vscode.workspace.getConfiguration("commandtree");
-  return (
-    config.get<string[]>("excludePatterns") ?? [
-      "**/node_modules/**",
-      "**/bin/**",
-      "**/obj/**",
-      "**/.git/**",
-    ]
-  );
+  return config.get<string[]>("excludePatterns") ?? ["**/node_modules/**", "**/bin/**", "**/obj/**", "**/.git/**"];
 }

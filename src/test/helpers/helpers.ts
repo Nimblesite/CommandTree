@@ -40,10 +40,7 @@ export async function activateExtension(): Promise<TestContext> {
   };
 }
 
-export async function executeCommand<T>(
-  command: string,
-  ...args: unknown[]
-): Promise<T> {
+export async function executeCommand<T>(command: string, ...args: unknown[]): Promise<T> {
   return await vscode.commands.executeCommand<T>(command, ...args);
 }
 
@@ -118,9 +115,7 @@ export function getCommandTreeProvider(): CommandTreeProvider {
   if (!extension.isActive) {
     throw new Error("Extension not active");
   }
-  const extensionExports = extension.exports as
-    | { commandTreeProvider?: CommandTreeProvider }
-    | undefined;
+  const extensionExports = extension.exports as { commandTreeProvider?: CommandTreeProvider } | undefined;
   const provider = extensionExports?.commandTreeProvider;
   if (!provider) {
     throw new Error("CommandTreeProvider not exported from extension");
@@ -130,7 +125,7 @@ export function getCommandTreeProvider(): CommandTreeProvider {
 
 export async function getTreeChildren(
   provider: CommandTreeProvider,
-  parent?: CommandTreeItem,
+  parent?: CommandTreeItem
 ): Promise<CommandTreeItem[]> {
   return await provider.getChildren(parent);
 }
@@ -143,9 +138,7 @@ export function getQuickTasksProvider(): QuickTasksProvider {
   if (!extension.isActive) {
     throw new Error("Extension not active");
   }
-  const extensionExports = extension.exports as
-    | { quickTasksProvider?: QuickTasksProvider }
-    | undefined;
+  const extensionExports = extension.exports as { quickTasksProvider?: QuickTasksProvider } | undefined;
   const provider = extensionExports?.quickTasksProvider;
   if (!provider) {
     throw new Error("QuickTasksProvider not exported from extension");
@@ -155,9 +148,7 @@ export function getQuickTasksProvider(): QuickTasksProvider {
 
 export { CommandTreeProvider, CommandTreeItem, QuickTasksProvider };
 
-export function getLabelString(
-  label: string | vscode.TreeItemLabel | undefined,
-): string {
+export function getLabelString(label: string | vscode.TreeItemLabel | undefined): string {
   if (label === undefined) {
     return "";
   }
@@ -167,9 +158,7 @@ export function getLabelString(
   return label.label;
 }
 
-export async function collectLeafItems(
-  p: CommandTreeProvider,
-): Promise<CommandTreeItem[]> {
+export async function collectLeafItems(p: CommandTreeProvider): Promise<CommandTreeItem[]> {
   const out: CommandTreeItem[] = [];
   async function walk(node: CommandTreeItem): Promise<void> {
     if (isCommandItem(node.data)) {
@@ -185,13 +174,9 @@ export async function collectLeafItems(
   return out;
 }
 
-export async function collectLeafTasks(
-  p: CommandTreeProvider,
-): Promise<CommandItem[]> {
+export async function collectLeafTasks(p: CommandTreeProvider): Promise<CommandItem[]> {
   const items = await collectLeafItems(p);
-  return items
-    .map((i) => i.data)
-    .filter((t): t is CommandItem => isCommandItem(t));
+  return items.map((i) => i.data).filter((t): t is CommandItem => isCommandItem(t));
 }
 
 export function getTooltipText(item: CommandTreeItem): string {
@@ -221,7 +206,7 @@ export function createMockTaskItem(
       options?: string[];
     }>;
     tags: string[];
-  }> = {},
+  }> = {}
 ): CommandItem {
   const base = {
     id: overrides.id ?? "test-task-id",

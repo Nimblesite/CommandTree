@@ -28,9 +28,7 @@ function buildTooltip(task: CommandItem): vscode.MarkdownString {
   const md = new vscode.MarkdownString();
   md.appendMarkdown(`**${task.label}**\n\n`);
   if (task.securityWarning !== undefined && task.securityWarning !== "") {
-    md.appendMarkdown(
-      `\u26A0\uFE0F **Security Warning:** ${task.securityWarning}\n\n`,
-    );
+    md.appendMarkdown(`\u26A0\uFE0F **Security Warning:** ${task.securityWarning}\n\n`);
     md.appendMarkdown(`---\n\n`);
   }
   if (task.summary !== undefined && task.summary !== "") {
@@ -43,9 +41,7 @@ function buildTooltip(task: CommandItem): vscode.MarkdownString {
     md.appendMarkdown(`Working Dir: \`${task.cwd}\`\n\n`);
   }
   if (task.tags.length > 0) {
-    md.appendMarkdown(
-      `Tags: ${task.tags.map((t) => `\`${t}\``).join(", ")}\n\n`,
-    );
+    md.appendMarkdown(`Tags: ${task.tags.map((t) => `\`${t}\``).join(", ")}\n\n`);
   }
   md.appendMarkdown(`Source: \`${task.filePath}\``);
   return md;
@@ -57,8 +53,7 @@ function buildDescription(task: CommandItem): string {
 }
 
 export function createCommandNode(task: CommandItem): CommandTreeItem {
-  const hasWarning =
-    task.securityWarning !== undefined && task.securityWarning !== "";
+  const hasWarning = task.securityWarning !== undefined && task.securityWarning !== "";
   const label = hasWarning ? `\u26A0\uFE0F ${task.label}` : task.label;
   return new CommandTreeItem({
     label,

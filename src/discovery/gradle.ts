@@ -17,10 +17,7 @@ export const CATEGORY_DEF: CategoryDef = {
  * Discovers Gradle tasks from build.gradle and build.gradle.kts files.
  * Only returns tasks if Java, Kotlin, or Groovy source files exist in the workspace.
  */
-export async function discoverGradleTasks(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverGradleTasks(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
 
   // Check if any JVM source files exist before processing
@@ -29,8 +26,7 @@ export async function discoverGradleTasks(
     vscode.workspace.findFiles("**/*.kt", exclude),
     vscode.workspace.findFiles("**/*.groovy", exclude),
   ]);
-  const totalSourceFiles =
-    javaFiles.length + kotlinSourceFiles.length + groovySourceFiles.length;
+  const totalSourceFiles = javaFiles.length + kotlinSourceFiles.length + groovySourceFiles.length;
   if (totalSourceFiles === 0) {
     return []; // No JVM source code, skip Gradle tasks
   }

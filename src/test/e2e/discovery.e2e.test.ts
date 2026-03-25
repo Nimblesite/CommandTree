@@ -41,35 +41,20 @@ suite("Command Discovery E2E Tests", () => {
     test("parses @param comments from shell scripts", function () {
       this.timeout(10000);
 
-      const buildScript = fs.readFileSync(
-        getFixturePath("scripts/build.sh"),
-        "utf8",
-      );
+      const buildScript = fs.readFileSync(getFixturePath("scripts/build.sh"), "utf8");
 
-      assert.ok(
-        buildScript.includes("@param config"),
-        "Should have config param",
-      );
-      assert.ok(
-        buildScript.includes("@param verbose"),
-        "Should have verbose param",
-      );
+      assert.ok(buildScript.includes("@param config"), "Should have config param");
+      assert.ok(buildScript.includes("@param verbose"), "Should have verbose param");
     });
 
     test("extracts description from first comment line", function () {
       this.timeout(10000);
 
-      const buildScript = fs.readFileSync(
-        getFixturePath("scripts/build.sh"),
-        "utf8",
-      );
+      const buildScript = fs.readFileSync(getFixturePath("scripts/build.sh"), "utf8");
       const lines = buildScript.split("\n");
 
       const secondLine = lines[1];
-      assert.ok(
-        secondLine?.includes("Build the project") === true,
-        "Should have description",
-      );
+      assert.ok(secondLine?.includes("Build the project") === true, "Should have description");
     });
   });
 
@@ -81,51 +66,24 @@ suite("Command Discovery E2E Tests", () => {
       const packageJsonPath = getFixturePath("package.json");
       assert.ok(fs.existsSync(packageJsonPath), "package.json should exist");
 
-      const packageJson = JSON.parse(
-        fs.readFileSync(packageJsonPath, "utf8"),
-      ) as PackageJson;
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as PackageJson;
       assert.ok(packageJson.scripts, "Should have scripts section");
-      assert.ok(
-        packageJson.scripts["build"] !== undefined,
-        "Should have build script",
-      );
-      assert.ok(
-        packageJson.scripts["test"] !== undefined,
-        "Should have test script",
-      );
-      assert.ok(
-        packageJson.scripts["lint"] !== undefined,
-        "Should have lint script",
-      );
-      assert.ok(
-        packageJson.scripts["start"] !== undefined,
-        "Should have start script",
-      );
+      assert.ok(packageJson.scripts["build"] !== undefined, "Should have build script");
+      assert.ok(packageJson.scripts["test"] !== undefined, "Should have test script");
+      assert.ok(packageJson.scripts["lint"] !== undefined, "Should have lint script");
+      assert.ok(packageJson.scripts["start"] !== undefined, "Should have start script");
     });
 
     test("discovers npm scripts from subproject package.json", function () {
       this.timeout(10000);
 
-      const subprojectPackageJsonPath = getFixturePath(
-        "subproject/package.json",
-      );
-      assert.ok(
-        fs.existsSync(subprojectPackageJsonPath),
-        "subproject/package.json should exist",
-      );
+      const subprojectPackageJsonPath = getFixturePath("subproject/package.json");
+      assert.ok(fs.existsSync(subprojectPackageJsonPath), "subproject/package.json should exist");
 
-      const packageJson = JSON.parse(
-        fs.readFileSync(subprojectPackageJsonPath, "utf8"),
-      ) as PackageJson;
+      const packageJson = JSON.parse(fs.readFileSync(subprojectPackageJsonPath, "utf8")) as PackageJson;
       assert.ok(packageJson.scripts, "Should have scripts section");
-      assert.ok(
-        packageJson.scripts["build"] !== undefined,
-        "Should have build script",
-      );
-      assert.ok(
-        packageJson.scripts["test"] !== undefined,
-        "Should have test script",
-      );
+      assert.ok(packageJson.scripts["build"] !== undefined, "Should have build script");
+      assert.ok(packageJson.scripts["test"] !== undefined, "Should have test script");
     });
   });
 
@@ -150,10 +108,7 @@ suite("Command Discovery E2E Tests", () => {
       this.timeout(10000);
 
       const makefile = fs.readFileSync(getFixturePath("Makefile"), "utf8");
-      assert.ok(
-        makefile.includes(".internal:"),
-        "Should have internal target in file",
-      );
+      assert.ok(makefile.includes(".internal:"), "Should have internal target in file");
     });
   });
 
@@ -167,27 +122,15 @@ suite("Command Discovery E2E Tests", () => {
 
       const content = fs.readFileSync(launchJsonPath, "utf8");
 
-      assert.ok(
-        content.includes("Debug Application"),
-        "Should have Debug Application config",
-      );
-      assert.ok(
-        content.includes("Debug Tests"),
-        "Should have Debug Tests config",
-      );
-      assert.ok(
-        content.includes("Debug Python"),
-        "Should have Debug Python config",
-      );
+      assert.ok(content.includes("Debug Application"), "Should have Debug Application config");
+      assert.ok(content.includes("Debug Tests"), "Should have Debug Tests config");
+      assert.ok(content.includes("Debug Python"), "Should have Debug Python config");
     });
 
     test("handles JSONC comments in launch.json", function () {
       this.timeout(10000);
 
-      const launchJson = fs.readFileSync(
-        getFixturePath(".vscode/launch.json"),
-        "utf8",
-      );
+      const launchJson = fs.readFileSync(getFixturePath(".vscode/launch.json"), "utf8");
 
       assert.ok(launchJson.includes("//"), "Should have single-line comments");
       assert.ok(launchJson.includes("/*"), "Should have multi-line comments");
@@ -204,48 +147,27 @@ suite("Command Discovery E2E Tests", () => {
 
       const content = fs.readFileSync(tasksJsonPath, "utf8");
 
-      assert.ok(
-        content.includes("Build Project"),
-        "Should have Build Project task",
-      );
+      assert.ok(content.includes("Build Project"), "Should have Build Project task");
       assert.ok(content.includes("Run Tests"), "Should have Run Tests task");
-      assert.ok(
-        content.includes("Deploy with Config"),
-        "Should have Deploy with Config task",
-      );
-      assert.ok(
-        content.includes("Custom Build"),
-        "Should have Custom Build task",
-      );
+      assert.ok(content.includes("Deploy with Config"), "Should have Deploy with Config task");
+      assert.ok(content.includes("Custom Build"), "Should have Custom Build task");
     });
 
     test("parses input definitions from tasks.json", function () {
       this.timeout(10000);
 
-      const tasksJson = fs.readFileSync(
-        getFixturePath(".vscode/tasks.json"),
-        "utf8",
-      );
+      const tasksJson = fs.readFileSync(getFixturePath(".vscode/tasks.json"), "utf8");
 
       assert.ok(tasksJson.includes('"inputs"'), "Should have inputs section");
       assert.ok(tasksJson.includes("deployEnv"), "Should have deployEnv input");
-      assert.ok(
-        tasksJson.includes("buildConfig"),
-        "Should have buildConfig input",
-      );
-      assert.ok(
-        tasksJson.includes("buildTarget"),
-        "Should have buildTarget input",
-      );
+      assert.ok(tasksJson.includes("buildConfig"), "Should have buildConfig input");
+      assert.ok(tasksJson.includes("buildTarget"), "Should have buildTarget input");
     });
 
     test("handles JSONC comments in tasks.json", function () {
       this.timeout(10000);
 
-      const tasksJson = fs.readFileSync(
-        getFixturePath(".vscode/tasks.json"),
-        "utf8",
-      );
+      const tasksJson = fs.readFileSync(getFixturePath(".vscode/tasks.json"), "utf8");
       assert.ok(tasksJson.includes("//"), "Should have comments");
     });
   });
@@ -256,16 +178,10 @@ suite("Command Discovery E2E Tests", () => {
       this.timeout(10000);
 
       const buildScriptPath = getFixturePath("scripts/build_project.py");
-      assert.ok(
-        fs.existsSync(buildScriptPath),
-        "build_project.py should exist",
-      );
+      assert.ok(fs.existsSync(buildScriptPath), "build_project.py should exist");
 
       const content = fs.readFileSync(buildScriptPath, "utf8");
-      assert.ok(
-        content.startsWith("#!/usr/bin/env python3"),
-        "Should have python shebang",
-      );
+      assert.ok(content.startsWith("#!/usr/bin/env python3"), "Should have python shebang");
     });
 
     test("discovers Python scripts with __main__ block", function () {
@@ -275,28 +191,16 @@ suite("Command Discovery E2E Tests", () => {
       assert.ok(fs.existsSync(runTestsPath), "run_tests.py should exist");
 
       const content = fs.readFileSync(runTestsPath, "utf8");
-      assert.ok(
-        content.includes('if __name__ == "__main__"'),
-        "Should have __main__ block",
-      );
+      assert.ok(content.includes('if __name__ == "__main__"'), "Should have __main__ block");
     });
 
     test("parses @param comments from Python scripts", function () {
       this.timeout(10000);
 
-      const buildScript = fs.readFileSync(
-        getFixturePath("scripts/build_project.py"),
-        "utf8",
-      );
+      const buildScript = fs.readFileSync(getFixturePath("scripts/build_project.py"), "utf8");
 
-      assert.ok(
-        buildScript.includes("@param config"),
-        "Should have config param",
-      );
-      assert.ok(
-        buildScript.includes("@param output"),
-        "Should have output param",
-      );
+      assert.ok(buildScript.includes("@param config"), "Should have config param");
+      assert.ok(buildScript.includes("@param output"), "Should have output param");
     });
 
     test("excludes non-runnable Python files", function () {
@@ -307,10 +211,7 @@ suite("Command Discovery E2E Tests", () => {
 
       const content = fs.readFileSync(utilsPath, "utf8");
       assert.ok(!content.includes("#!/"), "Should not have shebang");
-      assert.ok(
-        !content.includes("__main__"),
-        "Should not have __main__ block",
-      );
+      assert.ok(!content.includes("__main__"), "Should not have __main__ block");
     });
   });
 
@@ -357,10 +258,7 @@ suite("Command Discovery E2E Tests", () => {
 
       const content = fs.readFileSync(gradlePath, "utf8");
       assert.ok(content.includes("task hello"), "Should have hello task");
-      assert.ok(
-        content.includes("task customBuild"),
-        "Should have customBuild task",
-      );
+      assert.ok(content.includes("task customBuild"), "Should have customBuild task");
     });
   });
 
@@ -400,18 +298,9 @@ suite("Command Discovery E2E Tests", () => {
       assert.ok(fs.existsSync(antPath), "build.xml should exist");
 
       const content = fs.readFileSync(antPath, "utf8");
-      assert.ok(
-        content.includes('<target name="build"'),
-        "Should have build target",
-      );
-      assert.ok(
-        content.includes('<target name="clean"'),
-        "Should have clean target",
-      );
-      assert.ok(
-        content.includes('<target name="test"'),
-        "Should have test target",
-      );
+      assert.ok(content.includes('<target name="build"'), "Should have build target");
+      assert.ok(content.includes('<target name="clean"'), "Should have clean target");
+      assert.ok(content.includes('<target name="test"'), "Should have test target");
     });
   });
 
@@ -426,10 +315,7 @@ suite("Command Discovery E2E Tests", () => {
       const content = fs.readFileSync(justPath, "utf8");
       assert.ok(content.includes("build:"), "Should have build recipe");
       assert.ok(content.includes("test:"), "Should have test recipe");
-      assert.ok(
-        content.includes("deploy env="),
-        "Should have deploy recipe with param",
-      );
+      assert.ok(content.includes("deploy env="), "Should have deploy recipe with param");
     });
   });
 
@@ -472,10 +358,7 @@ suite("Command Discovery E2E Tests", () => {
       assert.ok(fs.existsSync(rakePath), "Rakefile should exist");
 
       const content = fs.readFileSync(rakePath, "utf8");
-      assert.ok(
-        content.includes("desc 'Build"),
-        "Should have build task with desc",
-      );
+      assert.ok(content.includes("desc 'Build"), "Should have build task with desc");
       assert.ok(content.includes("task :build"), "Should have build task");
       assert.ok(content.includes("task :test"), "Should have test task");
     });

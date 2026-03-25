@@ -1,13 +1,8 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import type {
-  CommandItem,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId, simplifyPath } from "../models/TaskItem";
-import { readFile, parseJson } from "../utils/fileUtils";
+import { readFile, parseJson, removeJsonComments } from "../utils/fileUtils";
 
 export const ICON_DEF: IconDef = {
   icon: "symbol-namespace",
@@ -23,10 +18,7 @@ interface DenoJson {
  * Discovers Deno tasks from deno.json and deno.jsonc files.
  * Only returns tasks if TypeScript/JavaScript source files exist (excluding node_modules).
  */
-export async function discoverDenoTasks(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverDenoTasks(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
 
   // Check if any TS/JS source files exist (outside node_modules)
@@ -88,15 +80,6 @@ export async function discoverDenoTasks(
   }
 
   return commands;
-}
-
-/**
- * Removes JSON comments (// and /* *\/) from content.
- */
-function removeJsonComments(content: string): string {
-  let result = content.replace(/\/\/.*$/gm, "");
-  result = result.replace(/\/\*[\s\S]*?\*\//g, "");
-  return result;
 }
 
 /**

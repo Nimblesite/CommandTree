@@ -19,10 +19,7 @@ interface PackageJson {
  *
  * Discovers npm scripts from package.json files.
  */
-export async function discoverNpmScripts(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverNpmScripts(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
   const files = await vscode.workspace.findFiles("**/package.json", exclude);
   const commands: CommandItem[] = [];

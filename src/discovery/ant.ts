@@ -14,10 +14,7 @@ export const CATEGORY_DEF: CategoryDef = { type: "ant", label: "Ant Targets" };
  * Discovers Ant targets from build.xml files.
  * Only returns tasks if Java source files (.java) exist in the workspace.
  */
-export async function discoverAntTargets(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverAntTargets(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
 
   // Check if any Java source files exist before processing
@@ -50,9 +47,7 @@ export async function discoverAntTargets(
         cwd: antDir,
         filePath: file.fsPath,
         tags: [],
-        ...(target.description !== undefined
-          ? { description: target.description }
-          : {}),
+        ...(target.description !== undefined ? { description: target.description } : {}),
       });
     }
   }
@@ -72,42 +67,28 @@ function parseAntTargets(content: string): AntTarget[] {
   const targets: AntTarget[] = [];
 
   // Match <target name="..." description="..."> patterns
-  const targetRegex =
-    /<target\s+[^>]*name\s*=\s*["']([^"']+)["'][^>]*(?:description\s*=\s*["']([^"']+)["'])?[^>]*>/g;
+  const targetRegex = /<target\s+[^>]*name\s*=\s*["']([^"']+)["'][^>]*(?:description\s*=\s*["']([^"']+)["'])?[^>]*>/g;
   let match;
   while ((match = targetRegex.exec(content)) !== null) {
     const name = match[1];
     const description = match[2];
-    if (
-      name !== undefined &&
-      name !== "" &&
-      !targets.some((t) => t.name === name)
-    ) {
+    if (name !== undefined && name !== "" && !targets.some((t) => t.name === name)) {
       targets.push({
         name,
-        ...(description !== undefined && description !== ""
-          ? { description }
-          : {}),
+        ...(description !== undefined && description !== "" ? { description } : {}),
       });
     }
   }
 
   // Also match targets where description comes before name
-  const altRegex =
-    /<target\s+[^>]*description\s*=\s*["']([^"']+)["'][^>]*name\s*=\s*["']([^"']+)["'][^>]*>/g;
+  const altRegex = /<target\s+[^>]*description\s*=\s*["']([^"']+)["'][^>]*name\s*=\s*["']([^"']+)["'][^>]*>/g;
   while ((match = altRegex.exec(content)) !== null) {
     const description = match[1];
     const name = match[2];
-    if (
-      name !== undefined &&
-      name !== "" &&
-      !targets.some((t) => t.name === name)
-    ) {
+    if (name !== undefined && name !== "" && !targets.some((t) => t.name === name)) {
       targets.push({
         name,
-        ...(description !== undefined && description !== ""
-          ? { description }
-          : {}),
+        ...(description !== undefined && description !== "" ? { description } : {}),
       });
     }
   }

@@ -80,11 +80,8 @@ class Logger {
     }
     const timestamp = new Date().toISOString();
     const detailsStr = JSON.stringify(details);
-    this.channel.appendLine(
-      `[${timestamp}] FILTER: ${operation} | ${detailsStr}`,
-    );
+    this.channel.appendLine(`[${timestamp}] FILTER: ${operation} | ${detailsStr}`);
   }
-
 }
 
 // Singleton instance

@@ -15,10 +15,7 @@ import {
   getQuickTasksProvider,
   getLabelString,
 } from "../helpers/helpers";
-import type {
-  CommandTreeProvider,
-  QuickTasksProvider,
-} from "../helpers/helpers";
+import type { CommandTreeProvider, QuickTasksProvider } from "../helpers/helpers";
 import { getDb } from "../../db/lifecycle";
 import { getCommandIdsByTag, getTagsForCommand } from "../../db/db";
 import { createCommandNode } from "../../tree/nodeFactory";
@@ -44,28 +41,19 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
     test("addToQuick command is registered", async function () {
       this.timeout(10000);
       const commands = await vscode.commands.getCommands(true);
-      assert.ok(
-        commands.includes("commandtree.addToQuick"),
-        "addToQuick command should be registered",
-      );
+      assert.ok(commands.includes("commandtree.addToQuick"), "addToQuick command should be registered");
     });
 
     test("removeFromQuick command is registered", async function () {
       this.timeout(10000);
       const commands = await vscode.commands.getCommands(true);
-      assert.ok(
-        commands.includes("commandtree.removeFromQuick"),
-        "removeFromQuick command should be registered",
-      );
+      assert.ok(commands.includes("commandtree.removeFromQuick"), "removeFromQuick command should be registered");
     });
 
     test("refreshQuick command is registered", async function () {
       this.timeout(10000);
       const commands = await vscode.commands.getCommands(true);
-      assert.ok(
-        commands.includes("commandtree.refreshQuick"),
-        "refreshQuick command should be registered",
-      );
+      assert.ok(commands.includes("commandtree.refreshQuick"), "refreshQuick command should be registered");
     });
   });
 
@@ -93,35 +81,21 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
         commandId: task.id,
       });
       assert.ok(tagsResult.ok, "Should get tags for command");
-      assert.ok(
-        tagsResult.value.includes(QUICK_TAG),
-        `Task ${task.id} should have 'quick' tag in database`,
-      );
+      assert.ok(tagsResult.value.includes(QUICK_TAG), `Task ${task.id} should have 'quick' tag in database`);
 
       // Verify the Quick Launch tree view shows the task
       const quickItems = quickProvider.getChildren();
-      assert.ok(
-        quickItems.length > 0,
-        "Quick tasks view should have items after add",
-      );
-      const hasTask = quickItems.some(
-        (qi) => isCommandItem(qi.data) && qi.data.id === task.id,
-      );
+      assert.ok(quickItems.length > 0, "Quick tasks view should have items after add");
+      const hasTask = quickItems.some((qi) => isCommandItem(qi.data) && qi.data.id === task.id);
       assert.ok(hasTask, "Quick tasks view should include the added task");
       const firstItem = quickItems[0];
       assert.ok(firstItem !== undefined, "First quick item must exist");
       const treeItem = quickProvider.getTreeItem(firstItem);
-      assert.ok(
-        treeItem.label !== undefined,
-        "getTreeItem should return a TreeItem with a label",
-      );
+      assert.ok(treeItem.label !== undefined, "getTreeItem should return a TreeItem with a label");
 
       // Clean up
       const removeItem = createCommandNode(task);
-      await vscode.commands.executeCommand(
-        "commandtree.removeFromQuick",
-        removeItem,
-      );
+      await vscode.commands.executeCommand("commandtree.removeFromQuick", removeItem);
       await sleep(500);
     });
 
@@ -145,17 +119,11 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
         handle: dbResult.value,
         commandId: task.id,
       });
-      assert.ok(
-        tagsResult.ok && tagsResult.value.includes(QUICK_TAG),
-        "Quick tag should exist before removal",
-      );
+      assert.ok(tagsResult.ok && tagsResult.value.includes(QUICK_TAG), "Quick tag should exist before removal");
 
       // Remove from quick via UI
       const removeItem = createCommandNode(task);
-      await vscode.commands.executeCommand(
-        "commandtree.removeFromQuick",
-        removeItem,
-      );
+      await vscode.commands.executeCommand("commandtree.removeFromQuick", removeItem);
       await sleep(1000);
 
       // Verify junction record removed
@@ -164,38 +132,26 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
         commandId: task.id,
       });
       assert.ok(tagsResult.ok, "Should get tags for command");
-      assert.ok(
-        !tagsResult.value.includes(QUICK_TAG),
-        `Task ${task.id} should NOT have 'quick' tag after removal`,
-      );
+      assert.ok(!tagsResult.value.includes(QUICK_TAG), `Task ${task.id} should NOT have 'quick' tag after removal`);
 
       // Verify tree view no longer shows the task
       const quickItemsAfterRemoval = quickProvider.getChildren();
       const hasRemovedTask = quickItemsAfterRemoval.some(
-        (item) => isCommandItem(item.data) && item.data.id === task.id,
+        (item) => isCommandItem(item.data) && item.data.id === task.id
       );
-      assert.ok(
-        !hasRemovedTask,
-        "Quick tasks view should NOT include removed task",
-      );
+      assert.ok(!hasRemovedTask, "Quick tasks view should NOT include removed task");
     });
 
     test("E2E: Quick commands ordered by display_order", async function () {
       this.timeout(20000);
 
       const allTasks = treeProvider.getAllTasks();
-      assert.ok(
-        allTasks.length >= 3,
-        "Need at least 3 tasks for ordering test",
-      );
+      assert.ok(allTasks.length >= 3, "Need at least 3 tasks for ordering test");
 
       const task1 = allTasks[0];
       const task2 = allTasks[1];
       const task3 = allTasks[2];
-      assert.ok(
-        task1 !== undefined && task2 !== undefined && task3 !== undefined,
-        "All three tasks must exist",
-      );
+      assert.ok(task1 !== undefined && task2 !== undefined && task3 !== undefined, "All three tasks must exist");
 
       // Add tasks in specific order
       const item1 = createCommandNode(task1);
@@ -228,51 +184,28 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
       assert.ok(index3 !== -1, "Task3 should be in quick list");
       assert.ok(
         index1 < index2 && index2 < index3,
-        "Tasks should be ordered by insertion order via display_order column",
+        "Tasks should be ordered by insertion order via display_order column"
       );
 
       // Verify tree view reflects correct ordering
       const quickItems = quickProvider.getChildren();
       const taskItems = quickItems.filter((item) => isCommandItem(item.data));
-      assert.ok(
-        taskItems.length >= 3,
-        "Should show at least 3 quick tasks in tree",
-      );
+      assert.ok(taskItems.length >= 3, "Should show at least 3 quick tasks in tree");
       const viewItem0 = taskItems[0];
       const viewItem1 = taskItems[1];
-      assert.ok(
-        viewItem0 !== undefined && viewItem1 !== undefined,
-        "View items must exist",
-      );
+      assert.ok(viewItem0 !== undefined && viewItem1 !== undefined, "View items must exist");
       assert.ok(isCommandItem(viewItem0.data), "View item 0 must be a command");
-      assert.strictEqual(
-        viewItem0.data.id,
-        task1.id,
-        "First view item should match first added task",
-      );
+      assert.strictEqual(viewItem0.data.id, task1.id, "First view item should match first added task");
       assert.ok(isCommandItem(viewItem1.data), "View item 1 must be a command");
-      assert.strictEqual(
-        viewItem1.data.id,
-        task2.id,
-        "Second view item should match second added task",
-      );
+      assert.strictEqual(viewItem1.data.id, task2.id, "Second view item should match second added task");
 
       // Clean up
       const removeItem1 = createCommandNode(task1);
       const removeItem2 = createCommandNode(task2);
       const removeItem3 = createCommandNode(task3);
-      await vscode.commands.executeCommand(
-        "commandtree.removeFromQuick",
-        removeItem1,
-      );
-      await vscode.commands.executeCommand(
-        "commandtree.removeFromQuick",
-        removeItem2,
-      );
-      await vscode.commands.executeCommand(
-        "commandtree.removeFromQuick",
-        removeItem3,
-      );
+      await vscode.commands.executeCommand("commandtree.removeFromQuick", removeItem1);
+      await vscode.commands.executeCommand("commandtree.removeFromQuick", removeItem2);
+      await vscode.commands.executeCommand("commandtree.removeFromQuick", removeItem3);
       await sleep(500);
     });
 
@@ -296,14 +229,8 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
         tagName: QUICK_TAG,
       });
       assert.ok(initialIdsResult.ok, "Should get command IDs");
-      const initialCount = initialIdsResult.value.filter(
-        (id) => id === task.id,
-      ).length;
-      assert.strictEqual(
-        initialCount,
-        1,
-        "Should have exactly one instance of task",
-      );
+      const initialCount = initialIdsResult.value.filter((id) => id === task.id).length;
+      assert.strictEqual(initialCount, 1, "Should have exactly one instance of task");
 
       // Try to add again (should be ignored by INSERT OR IGNORE)
       const item2 = createCommandNode(task);
@@ -315,21 +242,12 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
         tagName: QUICK_TAG,
       });
       assert.ok(afterIdsResult.ok, "Should get command IDs");
-      const afterCount = afterIdsResult.value.filter(
-        (id) => id === task.id,
-      ).length;
-      assert.strictEqual(
-        afterCount,
-        1,
-        "Should still have exactly one instance (no duplicates)",
-      );
+      const afterCount = afterIdsResult.value.filter((id) => id === task.id).length;
+      assert.strictEqual(afterCount, 1, "Should still have exactly one instance (no duplicates)");
 
       // Clean up
       const removeItem = createCommandNode(task);
-      await vscode.commands.executeCommand(
-        "commandtree.removeFromQuick",
-        removeItem,
-      );
+      await vscode.commands.executeCommand("commandtree.removeFromQuick", removeItem);
       await sleep(500);
     });
   });
@@ -345,7 +263,7 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
       const tasks = [allTasks[0], allTasks[1], allTasks[2]];
       assert.ok(
         tasks.every((t) => t !== undefined),
-        "All tasks must exist",
+        "All tasks must exist"
       );
 
       // Add in specific order
@@ -373,10 +291,7 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
         if (task !== undefined) {
           const position = orderedIds.indexOf(task.id);
           assert.ok(position !== -1, `Task ${i} should be in quick list`);
-          assert.ok(
-            position >= i,
-            `Task ${i} should be at position ${i} or later (found at ${position})`,
-          );
+          assert.ok(position >= i, `Task ${i} should be at position ${i} or later (found at ${position})`);
         }
       }
 
@@ -385,33 +300,20 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
       const tagConfig = new TagConfig();
       tagConfig.load();
       const configOrderedIds = tagConfig.getOrderedCommandIds(QUICK_TAG);
-      assert.ok(
-        configOrderedIds.length >= 3,
-        "getOrderedCommandIds should return at least 3 IDs",
-      );
+      assert.ok(configOrderedIds.length >= 3, "getOrderedCommandIds should return at least 3 IDs");
       const reversed = [...configOrderedIds].reverse();
       const reorderResult = tagConfig.reorderCommands(QUICK_TAG, reversed);
       assert.ok(reorderResult.ok, "reorderCommands should succeed");
       const newOrderedIds = tagConfig.getOrderedCommandIds(QUICK_TAG);
       const firstReversed = reversed[0];
       const lastReversed = reversed[reversed.length - 1];
-      assert.ok(
-        firstReversed !== undefined && lastReversed !== undefined,
-        "Reversed IDs must exist",
-      );
-      assert.strictEqual(
-        newOrderedIds[0],
-        firstReversed,
-        "First ID should match reversed order",
-      );
+      assert.ok(firstReversed !== undefined && lastReversed !== undefined, "Reversed IDs must exist");
+      assert.strictEqual(newOrderedIds[0], firstReversed, "First ID should match reversed order");
 
       // Clean up
       for (const task of tasks) {
         const removeItem = createCommandNode(task);
-        await vscode.commands.executeCommand(
-          "commandtree.removeFromQuick",
-          removeItem,
-        );
+        await vscode.commands.executeCommand("commandtree.removeFromQuick", removeItem);
       }
       await sleep(500);
     });
@@ -422,16 +324,9 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
     test("Quick tasks view shows placeholder when empty", function () {
       this.timeout(10000);
       const items = quickProvider.getChildren();
-      if (
-        items.length === 1 &&
-        items[0] !== undefined &&
-        !isCommandItem(items[0].data)
-      ) {
+      if (items.length === 1 && items[0] !== undefined && !isCommandItem(items[0].data)) {
         const label = getLabelString(items[0].label);
-        assert.ok(
-          label.includes("No quick commands"),
-          "Placeholder should mention no quick commands",
-        );
+        assert.ok(label.includes("No quick commands"), "Placeholder should mention no quick commands");
       }
       for (const item of items) {
         assert.ok(item.label !== undefined, "All items should have a label");

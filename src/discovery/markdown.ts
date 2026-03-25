@@ -1,11 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import type {
-  CommandItem,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId, simplifyPath } from "../models/TaskItem";
 import { readFile } from "../utils/fileUtils";
 
@@ -23,10 +18,7 @@ const MAX_DESCRIPTION_LENGTH = 150;
 /**
  * Discovers Markdown files (.md) in the workspace.
  */
-export async function discoverMarkdownFiles(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverMarkdownFiles(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
   const files = await vscode.workspace.findFiles("**/*.md", exclude);
   const commands: CommandItem[] = [];

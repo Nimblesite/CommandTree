@@ -1,11 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import type {
-  CommandItem,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId, simplifyPath } from "../models/TaskItem";
 import { readFile } from "../utils/fileUtils";
 
@@ -23,7 +18,7 @@ export const CATEGORY_DEF: CategoryDef = {
  */
 export async function discoverDockerComposeServices(
   workspaceRoot: string,
-  excludePatterns: string[],
+  excludePatterns: string[]
 ): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
   const [yml, yaml, composeYml, composeYaml] = await Promise.all([
@@ -142,12 +137,7 @@ function parseDockerComposeServices(content: string): string[] {
     }
 
     // Check if we've left the services section (another top-level key)
-    if (
-      inServices &&
-      indent <= servicesIndent &&
-      trimmed.endsWith(":") &&
-      !trimmed.includes(" ")
-    ) {
+    if (inServices && indent <= servicesIndent && trimmed.endsWith(":") && !trimmed.includes(" ")) {
       inServices = false;
       continue;
     }
@@ -157,18 +147,11 @@ function parseDockerComposeServices(content: string): string[] {
     }
 
     // Check for service definition (key at one indent level below services)
-    if (
-      indent === servicesIndent + 2 ||
-      (servicesIndent === 0 && indent === 2)
-    ) {
+    if (indent === servicesIndent + 2 || (servicesIndent === 0 && indent === 2)) {
       const serviceMatch = /^([a-zA-Z_][a-zA-Z0-9_-]*):/.exec(trimmed);
       if (serviceMatch !== null) {
         const serviceName = serviceMatch[1];
-        if (
-          serviceName !== undefined &&
-          serviceName !== "" &&
-          !services.includes(serviceName)
-        ) {
+        if (serviceName !== undefined && serviceName !== "" && !services.includes(serviceName)) {
           services.push(serviceName);
         }
       }

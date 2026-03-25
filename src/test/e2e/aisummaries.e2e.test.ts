@@ -32,38 +32,26 @@ suite("AI Summary E2E Tests", () => {
     test("generateSummaries command is registered", async function () {
       this.timeout(10000);
       const commands = await vscode.commands.getCommands(true);
-      assert.ok(
-        commands.includes("commandtree.generateSummaries"),
-        "generateSummaries command must be registered",
-      );
+      assert.ok(commands.includes("commandtree.generateSummaries"), "generateSummaries command must be registered");
     });
 
     test("selectModel command is registered", async function () {
       this.timeout(10000);
       const commands = await vscode.commands.getCommands(true);
-      assert.ok(
-        commands.includes("commandtree.selectModel"),
-        "selectModel command must be registered",
-      );
+      assert.ok(commands.includes("commandtree.selectModel"), "selectModel command must be registered");
     });
 
     test("Copilot models are available", async function () {
       this.timeout(30000);
       const models = await vscode.lm.selectChatModels({ vendor: "copilot" });
-      assert.ok(
-        models.length > 0,
-        "At least one Copilot model must be available — is GitHub Copilot authenticated?",
-      );
+      assert.ok(models.length > 0, "At least one Copilot model must be available — is GitHub Copilot authenticated?");
     });
 
     test("generateSummaries produces actual summaries on tasks", async function () {
       this.timeout(120000);
       const provider = getCommandTreeProvider();
       const tasksBefore = await collectLeafTasks(provider);
-      assert.ok(
-        tasksBefore.length > 0,
-        "Must have discovered tasks to summarise",
-      );
+      assert.ok(tasksBefore.length > 0, "Must have discovered tasks to summarise");
 
       // Run the generate summaries command
       await vscode.commands.executeCommand("commandtree.generateSummaries");
@@ -74,14 +62,12 @@ suite("AI Summary E2E Tests", () => {
       await sleep(2000);
 
       const tasksAfter = await collectLeafTasks(provider);
-      const withSummary = tasksAfter.filter(
-        (t) => t.summary !== undefined && t.summary !== "",
-      );
+      const withSummary = tasksAfter.filter((t) => t.summary !== undefined && t.summary !== "");
 
       assert.ok(
         withSummary.length > 0,
         `Copilot must generate at least one summary — got 0 out of ${tasksAfter.length} tasks. ` +
-          "If Copilot auth failed (GitHubLoginFailed), that is the root cause.",
+          "If Copilot auth failed (GitHubLoginFailed), that is the root cause."
       );
     });
 
@@ -102,10 +88,7 @@ suite("AI Summary E2E Tests", () => {
         return tooltip.includes("> ");
       });
 
-      assert.ok(
-        withTooltipSummary.length > 0,
-        "At least one tree item must have a summary in its tooltip",
-      );
+      assert.ok(withTooltipSummary.length > 0, "At least one tree item must have a summary in its tooltip");
     });
 
     test("security warnings are surfaced in tree labels", async function () {
@@ -120,9 +103,7 @@ suite("AI Summary E2E Tests", () => {
       await sleep(2000);
 
       const tasks = await collectLeafTasks(provider);
-      const withWarning = tasks.filter(
-        (t) => t.securityWarning !== undefined && t.securityWarning !== "",
-      );
+      const withWarning = tasks.filter((t) => t.securityWarning !== undefined && t.securityWarning !== "");
 
       // Not all tasks will have warnings, but if any do, verify they show in tooltips
       if (withWarning.length > 0) {
@@ -131,10 +112,7 @@ suite("AI Summary E2E Tests", () => {
           const tooltip = getTooltipText(item);
           return tooltip.includes("Security Warning");
         });
-        assert.ok(
-          warningItems.length > 0,
-          "Tasks with security warnings must show warning in tooltip",
-        );
+        assert.ok(warningItems.length > 0, "Tasks with security warnings must show warning in tooltip");
       }
     });
   });

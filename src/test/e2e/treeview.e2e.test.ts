@@ -7,13 +7,7 @@
  */
 
 import * as assert from "assert";
-import {
-  activateExtension,
-  sleep,
-  getCommandTreeProvider,
-  getLabelString,
-  collectLeafTasks,
-} from "../helpers/helpers";
+import { activateExtension, sleep, getCommandTreeProvider, getLabelString, collectLeafTasks } from "../helpers/helpers";
 import { type CommandTreeItem, isCommandItem } from "../../models/TaskItem";
 
 // TODO: No corresponding section in spec
@@ -55,24 +49,18 @@ suite("TreeView E2E Tests", () => {
       this.timeout(15000);
 
       const taskItem = await findFirstTaskItem();
-      assert.ok(
-        taskItem !== undefined,
-        "Should find at least one task item in the tree",
-      );
-      assert.ok(
-        taskItem.command !== undefined,
-        "Task item should have a click command",
-      );
+      assert.ok(taskItem !== undefined, "Should find at least one task item in the tree");
+      assert.ok(taskItem.command !== undefined, "Task item should have a click command");
       assert.strictEqual(
         taskItem.command.command,
         "vscode.open",
-        "Clicking a task MUST open the file (vscode.open), NOT run it (commandtree.run)",
+        "Clicking a task MUST open the file (vscode.open), NOT run it (commandtree.run)"
       );
       // Non-quick task must have 'task' contextValue so the EMPTY star icon shows
       assert.strictEqual(
         taskItem.contextValue,
         "task",
-        "Non-quick task MUST have contextValue 'task' (empty star icon)",
+        "Non-quick task MUST have contextValue 'task' (empty star icon)"
       );
     });
 
@@ -84,15 +72,12 @@ suite("TreeView E2E Tests", () => {
       assert.ok(taskItem.command !== undefined, "Should have click command");
 
       const args = taskItem.command.arguments;
-      assert.ok(
-        args !== undefined && args.length > 0,
-        "Click command should have arguments (file URI)",
-      );
+      assert.ok(args !== undefined && args.length > 0, "Click command should have arguments (file URI)");
 
       const uri = args[0] as { fsPath?: string; scheme?: string };
       assert.ok(
         uri.fsPath !== undefined && uri.fsPath !== "",
-        "Click command argument should be a file URI with fsPath",
+        "Click command argument should be a file URI with fsPath"
       );
       assert.strictEqual(uri.scheme, "file", "URI scheme should be 'file'");
     });
@@ -111,7 +96,7 @@ suite("TreeView E2E Tests", () => {
           assert.notStrictEqual(
             label,
             "Root",
-            `Category "${getLabelString(category.label)}" must NOT have a "Root" folder — root items should appear directly under the category`,
+            `Category "${getLabelString(category.label)}" must NOT have a "Root" folder — root items should appear directly under the category`
           );
         }
       }
@@ -121,25 +106,17 @@ suite("TreeView E2E Tests", () => {
       this.timeout(15000);
       const provider = getCommandTreeProvider();
       const categories = await provider.getChildren();
-      const shellCategory = categories.find((c) =>
-        getLabelString(c.label).includes("Shell Scripts"),
-      );
-      assert.ok(
-        shellCategory !== undefined,
-        "Should find Shell Scripts category",
-      );
+      const shellCategory = categories.find((c) => getLabelString(c.label).includes("Shell Scripts"));
+      assert.ok(shellCategory !== undefined, "Should find Shell Scripts category");
 
       const topChildren = await provider.getChildren(shellCategory);
       const mixedFolder = topChildren.find(
         (c) =>
           !isCommandItem(c.data) &&
           c.children.some((gc) => isCommandItem(gc.data)) &&
-          c.children.some((gc) => !isCommandItem(gc.data)),
+          c.children.some((gc) => !isCommandItem(gc.data))
       );
-      assert.ok(
-        mixedFolder !== undefined,
-        "Should find a folder containing both files and subfolders",
-      );
+      assert.ok(mixedFolder !== undefined, "Should find a folder containing both files and subfolders");
 
       const kids = mixedFolder.children;
       let seenTask = false;
@@ -147,10 +124,7 @@ suite("TreeView E2E Tests", () => {
         if (isCommandItem(child.data)) {
           seenTask = true;
         } else {
-          assert.ok(
-            !seenTask,
-            "Folder node must not appear after a file node — folders come first",
-          );
+          assert.ok(!seenTask, "Folder node must not appear after a file node — folders come first");
         }
       }
 
@@ -158,13 +132,11 @@ suite("TreeView E2E Tests", () => {
       // If Copilot auth fails (GitHubLoginFailed), tasks will have no summaries.
       // This MUST fail if the integration is broken.
       const allTasks = await collectLeafTasks(provider);
-      const withSummary = allTasks.filter(
-        (t) => t.summary !== undefined && t.summary !== "",
-      );
+      const withSummary = allTasks.filter((t) => t.summary !== undefined && t.summary !== "");
       assert.ok(
         withSummary.length > 0,
         `Copilot summarisation must produce summaries — got 0 out of ${allTasks.length} tasks. ` +
-          "Check for GitHubLoginFailed errors above.",
+          "Check for GitHubLoginFailed errors above."
       );
     });
   });

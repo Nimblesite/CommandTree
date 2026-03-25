@@ -140,10 +140,7 @@ export class TagConfig {
    * SPEC: quick-launch
    * Reorders commands for a tag by updating display_order in junction table.
    */
-  reorderCommands(
-    tagName: string,
-    orderedCommandIds: string[],
-  ): Result<void, string> {
+  reorderCommands(tagName: string, orderedCommandIds: string[]): Result<void, string> {
     const dbResult = getDb();
     if (!dbResult.ok) {
       return err(dbResult.error);

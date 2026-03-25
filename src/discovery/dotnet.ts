@@ -1,12 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import type {
-  CommandItem,
-  ParamDef,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, ParamDef, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId, simplifyPath } from "../models/TaskItem";
 import { readFile } from "../utils/fileUtils";
 
@@ -31,10 +25,7 @@ const EXECUTABLE_OUTPUT_TYPES = ["Exe", "WinExe"];
 /**
  * Discovers .NET projects (.csproj, .fsproj) and their available commands.
  */
-export async function discoverDotnetProjects(
-  workspaceRoot: string,
-  excludePatterns: string[],
-): Promise<CommandItem[]> {
+export async function discoverDotnetProjects(workspaceRoot: string, excludePatterns: string[]): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
   const [csprojFiles, fsprojFiles] = await Promise.all([
     vscode.workspace.findFiles("**/*.csproj", exclude),
@@ -55,29 +46,18 @@ export async function discoverDotnetProjects(
     const category = simplifyPath(file.fsPath, workspaceRoot);
     const projectName = path.basename(file.fsPath, path.extname(file.fsPath));
 
-    commands.push(
-      ...createProjectTasks(
-        file.fsPath,
-        projectDir,
-        category,
-        projectName,
-        projectInfo,
-      ),
-    );
+    commands.push(...createProjectTasks(file.fsPath, projectDir, category, projectName, projectInfo));
   }
 
   return commands;
 }
 
 function analyzeProject(content: string): ProjectInfo {
-  const isTestProject =
-    content.includes(TEST_SDK_PACKAGE) ||
-    TEST_FRAMEWORKS.some((fw) => content.includes(fw));
+  const isTestProject = content.includes(TEST_SDK_PACKAGE) || TEST_FRAMEWORKS.some((fw) => content.includes(fw));
 
   const outputTypeMatch = /<OutputType>(.*?)<\/OutputType>/i.exec(content);
   const outputType = outputTypeMatch?.[1]?.trim();
-  const isExecutable =
-    outputType !== undefined && EXECUTABLE_OUTPUT_TYPES.includes(outputType);
+  const isExecutable = outputType !== undefined && EXECUTABLE_OUTPUT_TYPES.includes(outputType);
 
   return { isTestProject, isExecutable };
 }
@@ -87,7 +67,7 @@ function createProjectTasks(
   projectDir: string,
   category: string,
   projectName: string,
-  info: ProjectInfo,
+  info: ProjectInfo
 ): CommandItem[] {
   const commands: CommandItem[] = [];
 
@@ -163,8 +143,7 @@ function createTestParams(): ParamDef[] {
   return [
     {
       name: "filter",
-      description:
-        "Test filter expression (optional, e.g., FullyQualifiedName~MyTest)",
+      description: "Test filter expression (optional, e.g., FullyQualifiedName~MyTest)",
       default: "",
       format: "flag",
       flag: "--filter",

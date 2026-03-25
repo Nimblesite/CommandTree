@@ -1,11 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import type {
-  CommandItem,
-  MutableCommandItem,
-  IconDef,
-  CategoryDef,
-} from "../models/TaskItem";
+import type { CommandItem, MutableCommandItem, IconDef, CategoryDef } from "../models/TaskItem";
 import { generateCommandId, simplifyPath } from "../models/TaskItem";
 import { readFile, parseJson } from "../utils/fileUtils";
 
@@ -29,7 +24,7 @@ interface ComposerJson {
  */
 export async function discoverComposerScripts(
   workspaceRoot: string,
-  excludePatterns: string[],
+  excludePatterns: string[]
 ): Promise<CommandItem[]> {
   const exclude = `{${excludePatterns.join(",")}}`;
 
@@ -54,10 +49,7 @@ export async function discoverComposerScripts(
     }
 
     const composer = composerResult.value;
-    if (
-      composer.scripts === undefined ||
-      typeof composer.scripts !== "object"
-    ) {
+    if (composer.scripts === undefined || typeof composer.scripts !== "object") {
       continue;
     }
 

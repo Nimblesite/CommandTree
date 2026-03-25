@@ -2,12 +2,7 @@ import * as vscode from "vscode";
 import type { CommandItem, Result, CategoryDef } from "./models/TaskItem";
 import type { CommandTreeItem } from "./models/TaskItem";
 import type { DiscoveryResult } from "./discovery";
-import {
-  discoverAllTasks,
-  flattenTasks,
-  getExcludePatterns,
-  CATEGORY_DEFS,
-} from "./discovery";
+import { discoverAllTasks, flattenTasks, getExcludePatterns, CATEGORY_DEFS } from "./discovery";
 import { TagConfig } from "./config/TagConfig";
 import { logger } from "./utils/logger";
 import { buildNestedFolderItems } from "./tree/folderTree";
@@ -22,9 +17,7 @@ type SortOrder = "folder" | "name" | "type";
  * Tree data provider for CommandTree view.
  */
 export class CommandTreeProvider implements vscode.TreeDataProvider<CommandTreeItem> {
-  private readonly _onDidChangeTreeData = new vscode.EventEmitter<
-    CommandTreeItem | undefined
-  >();
+  private readonly _onDidChangeTreeData = new vscode.EventEmitter<CommandTreeItem | undefined>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
   private commands: CommandItem[] = [];
@@ -42,13 +35,8 @@ export class CommandTreeProvider implements vscode.TreeDataProvider<CommandTreeI
   async refresh(): Promise<void> {
     this.tagConfig.load();
     const excludePatterns = getExcludePatterns();
-    this.discoveryResult = await discoverAllTasks(
-      this.workspaceRoot,
-      excludePatterns,
-    );
-    this.commands = this.tagConfig.applyTags(
-      flattenTasks(this.discoveryResult),
-    );
+    this.discoveryResult = await discoverAllTasks(this.workspaceRoot, excludePatterns);
+    this.commands = this.tagConfig.applyTags(flattenTasks(this.discoveryResult));
     this.loadSummaries();
     this.commands = this.attachSummaries(this.commands);
     this._onDidChangeTreeData.fire(undefined);
@@ -116,10 +104,7 @@ export class CommandTreeProvider implements vscode.TreeDataProvider<CommandTreeI
     return Array.from(tags).sort();
   }
 
-  async addTaskToTag(
-    task: CommandItem,
-    tagName: string,
-  ): Promise<Result<void, string>> {
+  async addTaskToTag(task: CommandItem, tagName: string): Promise<Result<void, string>> {
     const result = this.tagConfig.addTaskToTag(task, tagName);
     if (result.ok) {
       await this.refresh();
@@ -127,10 +112,7 @@ export class CommandTreeProvider implements vscode.TreeDataProvider<CommandTreeI
     return result;
   }
 
-  async removeTaskFromTag(
-    task: CommandItem,
-    tagName: string,
-  ): Promise<Result<void, string>> {
+  async removeTaskFromTag(task: CommandItem, tagName: string): Promise<Result<void, string>> {
     const result = this.tagConfig.removeTaskFromTag(task, tagName);
     if (result.ok) {
       await this.refresh();
@@ -158,28 +140,20 @@ export class CommandTreeProvider implements vscode.TreeDataProvider<CommandTreeI
 
   private buildRootCategories(): CommandTreeItem[] {
     const filtered = this.applyTagFilter(this.commands);
-    return CATEGORY_DEFS.map((def) =>
-      this.buildCategoryIfNonEmpty(filtered, def),
-    ).filter((c): c is CommandTreeItem => c !== null);
+    return CATEGORY_DEFS.map((def) => this.buildCategoryIfNonEmpty(filtered, def)).filter(
+      (c): c is CommandTreeItem => c !== null
+    );
   }
 
-  private buildCategoryIfNonEmpty(
-    tasks: readonly CommandItem[],
-    def: CategoryDef,
-  ): CommandTreeItem | null {
+  private buildCategoryIfNonEmpty(tasks: readonly CommandItem[], def: CategoryDef): CommandTreeItem | null {
     const matched = tasks.filter((t) => t.type === def.type);
     if (matched.length === 0) {
       return null;
     }
-    return def.flat === true
-      ? this.buildFlatCategory(def, matched)
-      : this.buildCategoryWithFolders(def, matched);
+    return def.flat === true ? this.buildFlatCategory(def, matched) : this.buildCategoryWithFolders(def, matched);
   }
 
-  private buildCategoryWithFolders(
-    def: CategoryDef,
-    tasks: CommandItem[],
-  ): CommandTreeItem {
+  private buildCategoryWithFolders(def: CategoryDef, tasks: CommandItem[]): CommandTreeItem {
     const children = buildNestedFolderItems({
       tasks,
       workspaceRoot: this.workspaceRoot,
@@ -193,10 +167,7 @@ export class CommandTreeProvider implements vscode.TreeDataProvider<CommandTreeI
     });
   }
 
-  private buildFlatCategory(
-    def: CategoryDef,
-    tasks: CommandItem[],
-  ): CommandTreeItem {
+  private buildFlatCategory(def: CategoryDef, tasks: CommandItem[]): CommandTreeItem {
     const sorted = this.sortTasks(tasks);
     const children = sorted.map((t) => createCommandNode(t));
     return createCategoryNode({
@@ -207,9 +178,7 @@ export class CommandTreeProvider implements vscode.TreeDataProvider<CommandTreeI
   }
 
   private getSortOrder(): SortOrder {
-    return vscode.workspace
-      .getConfiguration("commandtree")
-      .get<SortOrder>("sortOrder", "folder");
+    return vscode.workspace.getConfiguration("commandtree").get<SortOrder>("sortOrder", "folder");
   }
 
   private sortTasks(tasks: CommandItem[]): CommandItem[] {
@@ -220,12 +189,10 @@ export class CommandTreeProvider implements vscode.TreeDataProvider<CommandTreeI
   private getComparator(): (a: CommandItem, b: CommandItem) => number {
     const order = this.getSortOrder();
     if (order === "folder") {
-      return (a, b) =>
-        a.category.localeCompare(b.category) || a.label.localeCompare(b.label);
+      return (a, b) => a.category.localeCompare(b.category) || a.label.localeCompare(b.label);
     }
     if (order === "type") {
-      return (a, b) =>
-        a.type.localeCompare(b.type) || a.label.localeCompare(b.label);
+      return (a, b) => a.type.localeCompare(b.type) || a.label.localeCompare(b.label);
     }
     return (a, b) => a.label.localeCompare(b.label);
   }
