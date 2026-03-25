@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push:*)",
+      "WebFetch(domain:code.visualstudio.com)",
+      "mcp__too-many-cooks__lock",
+      "Bash(npm run compile:*)",
+      "Bash(node -e:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run lint:*)",
+      "mcp__too-many-cooks__message",
+      "mcp__too-many-cooks__register"
+    ]
+  },
+  "autoMemoryEnabled": false
+}
