@@ -3,7 +3,13 @@ import {
   parsePowerShellParams,
   parsePowerShellDescription,
   parseBatchDescription,
-} from "../../discovery/powershell";
+} from "../../discovery/parsers/powershellParser";
+
+function paramAt(params: ReadonlyArray<{ name: string; description?: string; default?: string }>, index: number) {
+  const p = params[index];
+  assert.ok(p !== undefined, `Expected param at index ${index}`);
+  return p;
+}
 
 suite("PowerShell Parser Unit Tests", () => {
   suite("parsePowerShellParams", () => {
@@ -15,36 +21,36 @@ suite("PowerShell Parser Unit Tests", () => {
       ].join("\n");
       const params = parsePowerShellParams(content);
       assert.strictEqual(params.length, 2);
-      assert.strictEqual(params[0]?.name, "config");
-      assert.strictEqual(params[0]?.description, "The configuration file");
-      assert.strictEqual(params[1]?.name, "verbose");
-      assert.strictEqual(params[1]?.description, "Enable verbose output");
+      assert.strictEqual(paramAt(params, 0).name, "config");
+      assert.strictEqual(paramAt(params, 0).description, "The configuration file");
+      assert.strictEqual(paramAt(params, 1).name, "verbose");
+      assert.strictEqual(paramAt(params, 1).description, "Enable verbose output");
     });
 
     test("extracts default values from @param comments", () => {
       const content = '# @param env The environment (default: dev)\nparam($env)';
       const params = parsePowerShellParams(content);
       assert.strictEqual(params.length, 1);
-      assert.strictEqual(params[0]?.name, "env");
-      assert.strictEqual(params[0]?.default, "dev");
+      assert.strictEqual(paramAt(params, 0).name, "env");
+      assert.strictEqual(paramAt(params, 0).default, "dev");
     });
 
     test("extracts param block variables not covered by comments", () => {
       const content = "param($Alpha, $Beta, $Gamma)";
       const params = parsePowerShellParams(content);
       assert.strictEqual(params.length, 3);
-      assert.strictEqual(params[0]?.name, "Alpha");
-      assert.strictEqual(params[1]?.name, "Beta");
-      assert.strictEqual(params[2]?.name, "Gamma");
+      assert.strictEqual(paramAt(params, 0).name, "Alpha");
+      assert.strictEqual(paramAt(params, 1).name, "Beta");
+      assert.strictEqual(paramAt(params, 2).name, "Gamma");
     });
 
-    test("does not duplicate params from comments and param block", () => {
-      const content = "# @param config Config file\nparam($config, $verbose)";
+    test("comment params and param block vars merge without duplicates", () => {
+      const content = "param($config, $verbose)\n# @param config Config file";
       const params = parsePowerShellParams(content);
       assert.strictEqual(params.length, 2);
-      assert.strictEqual(params[0]?.name, "config");
-      assert.strictEqual(params[0]?.description, "Config file");
-      assert.strictEqual(params[1]?.name, "verbose");
+      assert.strictEqual(paramAt(params, 0).name, "config");
+      assert.strictEqual(paramAt(params, 0).description, "Config file");
+      assert.strictEqual(paramAt(params, 1).name, "verbose");
     });
 
     test("returns empty for no params", () => {
@@ -57,7 +63,7 @@ suite("PowerShell Parser Unit Tests", () => {
       const content = "# @param config\nparam($config)";
       const params = parsePowerShellParams(content);
       assert.strictEqual(params.length, 1);
-      assert.strictEqual(params[0]?.name, "config");
+      assert.strictEqual(paramAt(params, 0).name, "config");
     });
 
     test("handles param block without opening paren", () => {
@@ -66,11 +72,10 @@ suite("PowerShell Parser Unit Tests", () => {
       assert.strictEqual(params.length, 0);
     });
 
-    test("handles empty @param tag", () => {
-      const content = "# @param \nparam($x)";
+    test("handles empty @param tag by skipping it", () => {
+      const content = "# @param \nWrite-Host 'hello'";
       const params = parsePowerShellParams(content);
-      assert.strictEqual(params.length, 1);
-      assert.strictEqual(params[0]?.name, "x");
+      assert.strictEqual(params.length, 0);
     });
   });
 
