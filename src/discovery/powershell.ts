@@ -167,7 +167,7 @@ function isWordChar(c: string): boolean {
  * Supports: # @param name Description
  * Also supports PowerShell param() blocks.
  */
-function parsePowerShellParams(content: string): ParamDef[] {
+export function parsePowerShellParams(content: string): ParamDef[] {
   const lines = content.split("\n");
   const params: ParamDef[] = [];
   for (const line of lines) {
@@ -269,14 +269,14 @@ function scanOutsideBlock(lines: readonly string[]): string | undefined {
 /**
  * Parses the first comment block as description for PowerShell.
  */
-function parsePowerShellDescription(content: string): string | undefined {
+export function parsePowerShellDescription(content: string): string | undefined {
   return scanOutsideBlock(content.split("\n"));
 }
 
 /**
  * Parses the first REM or :: comment as description for batch files.
  */
-function parseBatchDescription(content: string): string | undefined {
+export function parseBatchDescription(content: string): string | undefined {
   const lines = content.split("\n");
 
   for (const line of lines) {

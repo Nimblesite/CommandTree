@@ -1,18 +1,16 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
-import * as path from "path";
 import { CommandTreeProvider } from "./CommandTreeProvider";
 import { CommandTreeItem, isCommandItem } from "./models/TaskItem";
 import type { CommandItem } from "./models/TaskItem";
 import { TaskRunner } from "./runners/TaskRunner";
 import { QuickTasksProvider } from "./QuickTasksProvider";
 import { logger } from "./utils/logger";
-import type { DbHandle } from "./db/db";
-import { initDb, getDb, disposeDb } from "./db/lifecycle";
-import { addTagToCommand, removeTagFromCommand, getCommandIdsByTag } from "./db/db";
+import { initDb, disposeDb } from "./db/lifecycle";
 import { summariseAllTasks, registerAllCommands } from "./semantic/summaryPipeline";
 import { createVSCodeFileSystem } from "./semantic/vscodeAdapters";
 import { forceSelectModel } from "./semantic/summariser";
+import { syncTagsFromConfig } from "./tags/tagSync";
+import { setupFileWatchers } from "./watchers";
 
 let treeProvider: CommandTreeProvider;
 let quickTasksProvider: QuickTasksProvider;
@@ -36,7 +34,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<Extens
   taskRunner = new TaskRunner();
   registerTreeViews(context);
   registerCommands(context);
-  setupFileWatcher(context, workspaceRoot);
+  setupFileWatchers({
+    context,
+    onTaskFileChange: () => {
+      syncAndSummarise(workspaceRoot).catch((e: unknown) => {
+        logger.error("Sync failed", {
+          error: e instanceof Error ? e.message : "Unknown",
+        });
+      });
+    },
+    onConfigChange: () => {
+      syncTagsFromJson(workspaceRoot).catch((e: unknown) => {
+        logger.error("Config sync failed", {
+          error: e instanceof Error ? e.message : "Unknown",
+        });
+      });
+    },
+  });
   await syncQuickTasks();
   await registerDiscoveredCommands(workspaceRoot);
   await syncTagsFromJson(workspaceRoot);
@@ -228,155 +242,18 @@ async function handleRemoveTag(item: CommandTreeItem | CommandItem | undefined, 
   quickTasksProvider.updateTasks(treeProvider.getAllTasks());
 }
 
-function setupFileWatcher(context: vscode.ExtensionContext, workspaceRoot: string): void {
-  const watcher = vscode.workspace.createFileSystemWatcher(
-    "**/{package.json,Makefile,makefile,tasks.json,launch.json,*.sh,*.py}"
-  );
-  let debounceTimer: NodeJS.Timeout | undefined;
-  const onFileChange = (): void => {
-    if (debounceTimer !== undefined) {
-      clearTimeout(debounceTimer);
-    }
-    debounceTimer = setTimeout(() => {
-      syncAndSummarise(workspaceRoot).catch((e: unknown) => {
-        logger.error("Sync failed", {
-          error: e instanceof Error ? e.message : "Unknown",
-        });
-      });
-    }, 2000);
-  };
-  watcher.onDidChange(onFileChange);
-  watcher.onDidCreate(onFileChange);
-  watcher.onDidDelete(onFileChange);
-  context.subscriptions.push(watcher);
-
-  const configWatcher = vscode.workspace.createFileSystemWatcher("**/.vscode/commandtree.json");
-  let configDebounceTimer: NodeJS.Timeout | undefined;
-  const onConfigChange = (): void => {
-    if (configDebounceTimer !== undefined) {
-      clearTimeout(configDebounceTimer);
-    }
-    configDebounceTimer = setTimeout(() => {
-      syncTagsFromJson(workspaceRoot).catch((e: unknown) => {
-        logger.error("Config sync failed", {
-          error: e instanceof Error ? e.message : "Unknown",
-        });
-      });
-    }, 1000);
-  };
-  configWatcher.onDidChange(onConfigChange);
-  configWatcher.onDidCreate(onConfigChange);
-  configWatcher.onDidDelete(onConfigChange);
-  context.subscriptions.push(configWatcher);
-}
-
 async function syncQuickTasks(): Promise<void> {
   await treeProvider.refresh();
   const allTasks = treeProvider.getAllTasks();
   quickTasksProvider.updateTasks(allTasks);
 }
 
-interface TagPattern {
-  readonly id?: string;
-  readonly type?: string;
-  readonly label?: string;
-}
-
-function matchesPattern(task: CommandItem, pattern: string | TagPattern): boolean {
-  if (typeof pattern === "string") {
-    return task.id === pattern;
-  }
-  if (pattern.type !== undefined && task.type !== pattern.type) {
-    return false;
-  }
-  if (pattern.label !== undefined && task.label !== pattern.label) {
-    return false;
-  }
-  if (pattern.id !== undefined && task.id !== pattern.id) {
-    return false;
-  }
-  return true;
-}
-
-interface TagConfig {
-  readonly tags?: Record<string, Array<string | TagPattern>>;
-}
-
-function collectMatchedIds(
-  patterns: ReadonlyArray<string | TagPattern>,
-  allTasks: readonly CommandItem[]
-): Set<string> {
-  const matched = new Set<string>();
-  for (const pattern of patterns) {
-    for (const task of allTasks) {
-      if (matchesPattern(task, pattern)) {
-        matched.add(task.id);
-      }
-    }
-  }
-  return matched;
-}
-
-function syncTagDiff({
-  handle,
-  tagName,
-  currentIds,
-  matchedIds,
-}: {
-  readonly handle: DbHandle;
-  readonly tagName: string;
-  readonly currentIds: ReadonlySet<string>;
-  readonly matchedIds: ReadonlySet<string>;
-}): void {
-  for (const id of currentIds) {
-    if (!matchedIds.has(id)) {
-      removeTagFromCommand({ handle, commandId: id, tagName });
-    }
-  }
-  for (const id of matchedIds) {
-    if (!currentIds.has(id)) {
-      addTagToCommand({ handle, commandId: id, tagName });
-    }
-  }
-}
-
-function readTagConfig(configPath: string): TagConfig | undefined {
-  if (!fs.existsSync(configPath)) {
-    return undefined;
-  }
-  const content = fs.readFileSync(configPath, "utf8");
-  return JSON.parse(content) as TagConfig;
-}
-
 async function syncTagsFromJson(workspaceRoot: string): Promise<void> {
-  const configPath = path.join(workspaceRoot, ".vscode", "commandtree.json");
-  const config = readTagConfig(configPath);
-  if (config?.tags === undefined) {
-    return;
-  }
-  const dbResult = getDb();
-  if (!dbResult.ok) {
-    logger.warn("DB not available, skipping tag sync", {
-      error: dbResult.error,
-    });
-    return;
-  }
-  try {
-    const allTasks = treeProvider.getAllTasks();
-    for (const [tagName, patterns] of Object.entries(config.tags)) {
-      const existingIds = getCommandIdsByTag({ handle: dbResult.value, tagName });
-      const currentIds = existingIds.ok ? new Set(existingIds.value) : new Set<string>();
-      const matchedIds = collectMatchedIds(patterns, allTasks);
-      syncTagDiff({ handle: dbResult.value, tagName, currentIds, matchedIds });
-    }
+  const allTasks = treeProvider.getAllTasks();
+  const synced = syncTagsFromConfig({ allTasks, workspaceRoot });
+  if (synced) {
     await treeProvider.refresh();
     quickTasksProvider.updateTasks(treeProvider.getAllTasks());
-    logger.info("Tag sync complete");
-  } catch (e) {
-    logger.error("Tag sync failed", {
-      error: e instanceof Error ? e.message : "Unknown",
-      stack: e instanceof Error ? e.stack : undefined,
-    });
   }
 }
 

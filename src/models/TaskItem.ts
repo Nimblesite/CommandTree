@@ -203,7 +203,7 @@ export function simplifyPath(filePath: string, workspaceRoot: string): string {
       return `${first}/.../${last}`;
     }
   }
-  return relative.replace(/\\/g, "/");
+  return relative.split("\\").join("/");
 }
 
 /**

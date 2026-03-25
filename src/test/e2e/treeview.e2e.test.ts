@@ -140,6 +140,13 @@ suite("TreeView E2E Tests", () => {
         }
       }
 
+    });
+  });
+
+  suite("AI Summaries", () => {
+    test("Copilot summarisation produces summaries for discovered tasks", async function () {
+      this.timeout(15000);
+      const provider = getCommandTreeProvider();
       // AI summaries: extension activation triggers summarisation via Copilot.
       // If Copilot auth fails (GitHubLoginFailed), tasks will have no summaries.
       // This MUST fail if the integration is broken.

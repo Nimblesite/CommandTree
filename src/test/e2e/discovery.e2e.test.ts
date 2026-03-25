@@ -379,6 +379,30 @@ suite("Command Discovery E2E Tests", () => {
     });
   });
 
+  suite(".NET Project Discovery", () => {
+    test("discovers .csproj files with executable and test projects", function () {
+      this.timeout(10000);
+
+      const appPath = getFixturePath("MyApp.csproj");
+      assert.ok(fs.existsSync(appPath), "MyApp.csproj should exist");
+
+      const content = fs.readFileSync(appPath, "utf8");
+      assert.ok(content.includes("<OutputType>Exe</OutputType>"), "Should have Exe output type");
+      assert.ok(content.includes("<TargetFramework>"), "Should have target framework");
+    });
+
+    test("discovers test projects with Microsoft.NET.Test.Sdk", function () {
+      this.timeout(10000);
+
+      const testPath = getFixturePath("MyApp.Tests.csproj");
+      assert.ok(fs.existsSync(testPath), "MyApp.Tests.csproj should exist");
+
+      const content = fs.readFileSync(testPath, "utf8");
+      assert.ok(content.includes("Microsoft.NET.Test.Sdk"), "Should have test SDK reference");
+      assert.ok(content.includes("xunit"), "Should have xunit reference");
+    });
+  });
+
   // TODO: No corresponding section in spec
   suite("Docker Compose Discovery", () => {
     test("discovers docker-compose.yml services", function () {
