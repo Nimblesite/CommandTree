@@ -102,8 +102,9 @@ suite("Configuration and File Watchers E2E Tests", () => {
 
       const packageJson = readExtensionPackageJson();
       const enumValues =
-        packageJson.contributes.configuration.properties["commandtree.sortOrder"]
-          .enum;
+        packageJson.contributes.configuration.properties[
+          "commandtree.sortOrder"
+        ].enum;
 
       assert.ok(enumValues, "enum should exist");
       assert.ok(enumValues.includes("folder"), "Should have folder option");
@@ -116,8 +117,9 @@ suite("Configuration and File Watchers E2E Tests", () => {
 
       const packageJson = readExtensionPackageJson();
       const defaultValue =
-        packageJson.contributes.configuration.properties["commandtree.sortOrder"]
-          .default;
+        packageJson.contributes.configuration.properties[
+          "commandtree.sortOrder"
+        ].default;
 
       assert.strictEqual(
         defaultValue,
@@ -131,8 +133,9 @@ suite("Configuration and File Watchers E2E Tests", () => {
 
       const packageJson = readExtensionPackageJson();
       const enumDescriptions =
-        packageJson.contributes.configuration.properties["commandtree.sortOrder"]
-          .enumDescriptions;
+        packageJson.contributes.configuration.properties[
+          "commandtree.sortOrder"
+        ].enumDescriptions;
 
       assert.ok(enumDescriptions, "enumDescriptions should exist");
       assert.ok(enumDescriptions.length === 3, "Should have 3 descriptions");

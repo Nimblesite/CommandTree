@@ -41,6 +41,5 @@ suite("Command Filtering E2E Tests", () => {
         "filterByTag command should be registered",
       );
     });
-
   });
 });

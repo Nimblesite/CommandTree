@@ -46,7 +46,9 @@ export class CommandTreeProvider implements vscode.TreeDataProvider<CommandTreeI
       this.workspaceRoot,
       excludePatterns,
     );
-    this.commands = this.tagConfig.applyTags(flattenTasks(this.discoveryResult));
+    this.commands = this.tagConfig.applyTags(
+      flattenTasks(this.discoveryResult),
+    );
     this.loadSummaries();
     this.commands = this.attachSummaries(this.commands);
     this._onDidChangeTreeData.fire(undefined);

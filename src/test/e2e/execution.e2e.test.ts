@@ -117,7 +117,9 @@ suite("Command Execution E2E Tests", () => {
       });
 
       try {
-        await vscode.commands.executeCommand("commandtree.run", { data: shellTask });
+        await vscode.commands.executeCommand("commandtree.run", {
+          data: shellTask,
+        });
         await sleep(2000);
 
         const terminalsAfter = vscode.window.terminals.length;
@@ -891,7 +893,7 @@ suite("Command Execution E2E Tests", () => {
       );
       assert.ok(
         commandTreeTerminal !== undefined,
-        `Should create terminal with CommandTree in name. Found terminals: [${terminals.map(t => t.name).join(", ")}]`,
+        `Should create terminal with CommandTree in name. Found terminals: [${terminals.map((t) => t.name).join(", ")}]`,
       );
       assert.ok(
         commandTreeTerminal.name.includes("Named Terminal Test"),

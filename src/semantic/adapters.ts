@@ -5,12 +5,12 @@
  * Allows unit testing without VS Code instance.
  */
 
-import type { Result } from '../models/Result';
+import type { Result } from "../models/Result";
 
 /**
  * File system operations abstraction.
  * Implementations: VSCodeFileSystem (production), NodeFileSystem (unit tests)
  */
 export interface FileSystemAdapter {
-    readFile: (path: string) => Promise<Result<string, string>>;
+  readFile: (path: string) => Promise<Result<string, string>>;
 }
