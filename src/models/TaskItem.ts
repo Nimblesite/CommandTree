@@ -42,7 +42,9 @@ export type CommandType =
   | "composer"
   | "docker"
   | "dotnet"
-  | "markdown";
+  | "markdown"
+  | "csharp-script"
+  | "fsharp-script";
 
 /**
  * Parameter format types for flexible argument handling across different tools.

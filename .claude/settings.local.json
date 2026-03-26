@@ -16,7 +16,9 @@
       "mcp__too-many-cooks__plan",
       "Bash(npm ci:*)",
       "Bash(npm run:*)",
-      "Bash(npx cspell:*)"
+      "Bash(npx cspell:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh run:*)"
     ]
   },
   "autoMemoryEnabled": false

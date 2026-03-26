@@ -1,4 +1,4 @@
-.PHONY: format lint build package test ci
+.PHONY: format lint build package test test-exclude-ci ci
 
 format:
 	npx prettier --write "src/**/*.ts"
@@ -15,5 +15,9 @@ package: build
 test: build
 	npm run test:unit
 	npx vscode-test --coverage
+
+test-exclude-ci: build
+	npm run test:unit
+	npx vscode-test --coverage --grep @exclude-ci --invert
 
 ci: format lint build test package

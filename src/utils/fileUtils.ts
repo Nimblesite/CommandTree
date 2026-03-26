@@ -104,6 +104,25 @@ function skipUntilNewline(content: string, start: number): number {
   return i;
 }
 
+/**
+ * Extracts description from the first non-empty line-comment in file content.
+ */
+export function parseFirstLineComment(content: string, commentPrefix: string): string | undefined {
+  const lines = content.split("\n");
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed === "") {
+      continue;
+    }
+    if (trimmed.startsWith(commentPrefix)) {
+      const desc = trimmed.slice(commentPrefix.length).trim();
+      return desc === "" ? undefined : desc;
+    }
+    break;
+  }
+  return undefined;
+}
+
 function skipUntilBlockEnd(content: string, start: number): number {
   let i = start + 2;
   while (i < content.length) {

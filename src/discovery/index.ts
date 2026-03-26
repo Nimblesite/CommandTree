@@ -19,6 +19,16 @@ import { discoverComposerScripts, ICON_DEF as COMPOSER_ICON, CATEGORY_DEF as COM
 import { discoverDockerComposeServices, ICON_DEF as DOCKER_ICON, CATEGORY_DEF as DOCKER_CAT } from "./docker";
 import { discoverDotnetProjects, ICON_DEF as DOTNET_ICON, CATEGORY_DEF as DOTNET_CAT } from "./dotnet";
 import { discoverMarkdownFiles, ICON_DEF as MARKDOWN_ICON, CATEGORY_DEF as MARKDOWN_CAT } from "./markdown";
+import {
+  discoverCsharpScripts,
+  ICON_DEF as CSHARP_SCRIPT_ICON,
+  CATEGORY_DEF as CSHARP_SCRIPT_CAT,
+} from "./csharp-script";
+import {
+  discoverFsharpScripts,
+  ICON_DEF as FSHARP_SCRIPT_ICON,
+  CATEGORY_DEF as FSHARP_SCRIPT_CAT,
+} from "./fsharp-script";
 import { logger } from "../utils/logger";
 
 export const ICON_REGISTRY: Record<CommandType, IconDef> = {
@@ -41,6 +51,8 @@ export const ICON_REGISTRY: Record<CommandType, IconDef> = {
   docker: DOCKER_ICON,
   dotnet: DOTNET_ICON,
   markdown: MARKDOWN_ICON,
+  "csharp-script": CSHARP_SCRIPT_ICON,
+  "fsharp-script": FSHARP_SCRIPT_ICON,
 };
 
 export const CATEGORY_DEFS: readonly CategoryDef[] = [
@@ -63,6 +75,8 @@ export const CATEGORY_DEFS: readonly CategoryDef[] = [
   DOCKER_CAT,
   DOTNET_CAT,
   MARKDOWN_CAT,
+  CSHARP_SCRIPT_CAT,
+  FSHARP_SCRIPT_CAT,
 ];
 
 export interface DiscoveryResult {
@@ -85,6 +99,8 @@ export interface DiscoveryResult {
   docker: CommandItem[];
   dotnet: CommandItem[];
   markdown: CommandItem[];
+  "csharp-script": CommandItem[];
+  "fsharp-script": CommandItem[];
 }
 
 /**
@@ -114,6 +130,8 @@ export async function discoverAllTasks(workspaceRoot: string, excludePatterns: s
     docker,
     dotnet,
     markdown,
+    csharpScript,
+    fsharpScript,
   ] = await Promise.all([
     discoverShellScripts(workspaceRoot, excludePatterns),
     discoverNpmScripts(workspaceRoot, excludePatterns),
@@ -134,6 +152,8 @@ export async function discoverAllTasks(workspaceRoot: string, excludePatterns: s
     discoverDockerComposeServices(workspaceRoot, excludePatterns),
     discoverDotnetProjects(workspaceRoot, excludePatterns),
     discoverMarkdownFiles(workspaceRoot, excludePatterns),
+    discoverCsharpScripts(workspaceRoot, excludePatterns),
+    discoverFsharpScripts(workspaceRoot, excludePatterns),
   ]);
 
   const result = {
@@ -156,6 +176,8 @@ export async function discoverAllTasks(workspaceRoot: string, excludePatterns: s
     docker,
     dotnet,
     markdown,
+    "csharp-script": csharpScript,
+    "fsharp-script": fsharpScript,
   };
 
   const totalCount =
@@ -177,7 +199,9 @@ export async function discoverAllTasks(workspaceRoot: string, excludePatterns: s
     composer.length +
     docker.length +
     dotnet.length +
-    markdown.length;
+    markdown.length +
+    csharpScript.length +
+    fsharpScript.length;
 
   logger.info("Discovery complete", { totalCount });
 
@@ -208,6 +232,8 @@ export function flattenTasks(result: DiscoveryResult): CommandItem[] {
     ...result.docker,
     ...result.dotnet,
     ...result.markdown,
+    ...result["csharp-script"],
+    ...result["fsharp-script"],
   ];
 }
 
