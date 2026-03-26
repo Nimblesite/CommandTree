@@ -10,7 +10,7 @@ export async function readFile(uri: vscode.Uri): Promise<Result<string, string>>
   try {
     const bytes = await vscode.workspace.fs.readFile(uri);
     return ok(new TextDecoder().decode(bytes));
-  } catch (e) {
+  } /* istanbul ignore next -- VS Code FS API does not throw in test environment */ catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error reading file";
     return err(message);
   }

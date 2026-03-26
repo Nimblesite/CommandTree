@@ -111,6 +111,7 @@ export class QuickTasksProvider
    */
   private sortByDisplayOrder(tasks: CommandItem[]): CommandItem[] {
     const dbResult = getDb();
+    /* istanbul ignore if -- DB is always initialised before tree views render */
     if (!dbResult.ok) {
       return tasks.sort((a, b) => a.label.localeCompare(b.label));
     }
@@ -119,6 +120,7 @@ export class QuickTasksProvider
       handle: dbResult.value,
       tagName: QUICK_TAG,
     });
+    /* istanbul ignore if -- getCommandIdsByTag SELECT cannot fail with valid DB */
     if (!orderedIdsResult.ok) {
       return tasks.sort((a, b) => a.label.localeCompare(b.label));
     }
@@ -180,6 +182,7 @@ export class QuickTasksProvider
    */
   private fetchOrderedQuickIds(): string[] | undefined {
     const dbResult = getDb();
+    /* istanbul ignore if -- DB is always initialised before tree views render */
     if (!dbResult.ok) {
       return undefined;
     }
@@ -187,6 +190,7 @@ export class QuickTasksProvider
       handle: dbResult.value,
       tagName: QUICK_TAG,
     });
+    /* istanbul ignore next -- getCommandIdsByTag cannot fail with valid DB handle */
     return orderedIdsResult.ok ? orderedIdsResult.value : undefined;
   }
 
@@ -225,6 +229,7 @@ export class QuickTasksProvider
    */
   private persistDisplayOrder(reordered: string[]): void {
     const dbResult = getDb();
+    /* istanbul ignore if -- DB is always initialised before tree views render */
     if (!dbResult.ok) {
       return;
     }

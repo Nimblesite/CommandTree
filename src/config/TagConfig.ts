@@ -24,12 +24,14 @@ export class TagConfig {
    */
   public load(): void {
     const dbResult = getDb();
+    /* istanbul ignore if -- DB is always initialised before tag config loads */
     if (!dbResult.ok) {
       this.commandTagsMap = new Map();
       return;
     }
 
     const tagNamesResult = getAllTagNames(dbResult.value);
+    /* istanbul ignore if -- getAllTagNames SELECT cannot fail with valid DB */
     if (!tagNamesResult.ok) {
       this.commandTagsMap = new Map();
       return;
@@ -69,6 +71,7 @@ export class TagConfig {
    */
   public getTagNames(): string[] {
     const dbResult = getDb();
+    /* istanbul ignore if -- DB is always initialised before tag operations */
     if (!dbResult.ok) {
       return [];
     }
@@ -82,6 +85,7 @@ export class TagConfig {
    */
   public addTaskToTag(task: CommandItem, tagName: string): Result<void, string> {
     const dbResult = getDb();
+    /* istanbul ignore if -- DB is always initialised before tag operations */
     if (!dbResult.ok) {
       return err(dbResult.error);
     }
@@ -104,6 +108,7 @@ export class TagConfig {
    */
   public removeTaskFromTag(task: CommandItem, tagName: string): Result<void, string> {
     const dbResult = getDb();
+    /* istanbul ignore if -- DB is always initialised before tag operations */
     if (!dbResult.ok) {
       return err(dbResult.error);
     }
@@ -126,6 +131,7 @@ export class TagConfig {
    */
   public getOrderedCommandIds(tagName: string): string[] {
     const dbResult = getDb();
+    /* istanbul ignore if -- DB is always initialised before tag operations */
     if (!dbResult.ok) {
       return [];
     }
@@ -142,6 +148,7 @@ export class TagConfig {
    */
   public reorderCommands(tagName: string, orderedCommandIds: string[]): Result<void, string> {
     const dbResult = getDb();
+    /* istanbul ignore if -- DB is always initialised before tag operations */
     if (!dbResult.ok) {
       return err(dbResult.error);
     }

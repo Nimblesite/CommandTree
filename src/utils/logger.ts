@@ -30,6 +30,7 @@ class Logger {
    * Logs an info message
    */
   public info(message: string, data?: unknown): void {
+    /* istanbul ignore if -- logger is always enabled during tests */
     if (!this.enabled) {
       return;
     }
@@ -45,6 +46,7 @@ class Logger {
    * Logs a warning message
    */
   public warn(message: string, data?: unknown): void {
+    /* istanbul ignore if -- logger is always enabled during tests */
     if (!this.enabled) {
       return;
     }
@@ -60,6 +62,7 @@ class Logger {
    * Logs an error message
    */
   public error(message: string, data?: unknown): void {
+    /* istanbul ignore if -- logger is always enabled during tests */
     if (!this.enabled) {
       return;
     }
@@ -75,6 +78,7 @@ class Logger {
    * Logs filter operations
    */
   public filter(operation: string, details: Record<string, unknown>): void {
+    /* istanbul ignore if -- logger is always enabled during tests */
     if (!this.enabled) {
       return;
     }

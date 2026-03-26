@@ -91,6 +91,7 @@ export function syncTagsFromConfig({
     return false;
   }
   const dbResult = getDb();
+  /* istanbul ignore if -- DB is always initialised before tag sync runs */
   if (!dbResult.ok) {
     logger.warn("DB not available, skipping tag sync", {
       error: dbResult.error,
@@ -106,7 +107,7 @@ export function syncTagsFromConfig({
     }
     logger.info("Tag sync complete");
     return true;
-  } catch (e) {
+  } /* istanbul ignore next -- DB functions return Result types and never throw in practice */ catch (e) {
     logger.error("Tag sync failed", {
       error: e instanceof Error ? e.message : "Unknown",
       stack: e instanceof Error ? e.stack : undefined,

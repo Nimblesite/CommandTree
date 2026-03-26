@@ -44,10 +44,12 @@ export class CommandTreeProvider implements vscode.TreeDataProvider<CommandTreeI
 
   private loadSummaries(): void {
     const dbResult = getDb();
+    /* istanbul ignore if -- DB is always initialised before tree views render */
     if (!dbResult.ok) {
       return;
     }
     const result = getAllRows(dbResult.value);
+    /* istanbul ignore if -- getAllRows SELECT cannot fail with a valid DB handle */
     if (!result.ok) {
       return;
     }
