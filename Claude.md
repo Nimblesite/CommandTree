@@ -116,6 +116,8 @@ https://developers.google.com/search/docs/fundamentals/seo-starter-guide
 https://studiohawk.com.au/blog/how-to-optimise-ai-overviews/
 https://about.ads.microsoft.com/en/blog/post/october-2025/optimizing-your-content-for-inclusion-in-ai-search-answers
 
+https://documentation.platformos.com/use-cases/implementing-social-media-preview-cards
+
 ## Project Structure
 
 ```

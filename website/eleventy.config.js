@@ -18,11 +18,13 @@ export default function(eleventyConfig) {
 
   eleventyConfig.addPassthroughCopy("src/assets");
   eleventyConfig.addPassthroughCopy({ "src/favicon.ico": "favicon.ico" });
+  eleventyConfig.addPassthroughCopy({ "src/site.webmanifest": "site.webmanifest" });
 
   const faviconLinks = [
     '  <link rel="icon" href="/favicon.ico" sizes="48x48">',
     '  <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">',
     '  <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">',
+    '  <link rel="manifest" href="/site.webmanifest">',
   ].join("\n");
 
   const isIconLink = (line) => {
@@ -144,13 +146,21 @@ export default function(eleventyConfig) {
     if (!this.page.outputPath?.endsWith(".html")) {
       return content;
     }
-    const ogImageAltTag = '  <meta property="og:image:alt" content="CommandTree - One sidebar, every command in VS Code. Auto-discover 19 command types with AI-powered summaries.">';
+    const altText = "CommandTree - One sidebar, every command in VS Code. Auto-discover 21 command types with AI-powered summaries.";
+    const ogImageAltTag = `  <meta property="og:image:alt" content="${altText}">`;
+    const twitterImageAltTag = `  <meta name="twitter:image:alt" content="${altText}">`;
     const ogImageHeightTag = 'og:image:height';
     const insertionPoint = content.indexOf(ogImageHeightTag);
     if (insertionPoint < 0) { return content; }
     const lineEnd = content.indexOf("\n", insertionPoint);
     if (lineEnd < 0) { return content; }
-    return content.slice(0, lineEnd + 1) + ogImageAltTag + "\n" + content.slice(lineEnd + 1);
+    const withOgAlt = content.slice(0, lineEnd + 1) + ogImageAltTag + "\n" + content.slice(lineEnd + 1);
+    const twitterImageTag = 'twitter:image" content=';
+    const twitterInsert = withOgAlt.indexOf(twitterImageTag);
+    if (twitterInsert < 0) { return withOgAlt; }
+    const twitterLineEnd = withOgAlt.indexOf("\n", twitterInsert);
+    if (twitterLineEnd < 0) { return withOgAlt; }
+    return withOgAlt.slice(0, twitterLineEnd + 1) + twitterImageAltTag + "\n" + withOgAlt.slice(twitterLineEnd + 1);
   });
 
   eleventyConfig.addTransform("articleMeta", function(content) {
@@ -234,6 +244,38 @@ export default function(eleventyConfig) {
       })),
     };
     const scriptTag = `\n  <script type="application/ld+json">\n  ${JSON.stringify(faqSchema, null, 2).split("\n").join("\n  ")}\n  </script>`;
+    return content.replace("</head>", scriptTag + "\n</head>");
+  });
+
+  eleventyConfig.addTransform("softwareAppSchema", function(content) {
+    if (!this.page.outputPath?.endsWith(".html")) {
+      return content;
+    }
+    if (this.page.url !== "/") {
+      return content;
+    }
+    const softwareSchema = {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CommandTree",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Windows, macOS, Linux",
+      "description": "VS Code extension that auto-discovers 21 command types — shell scripts, npm, Make, Gradle, Cargo, Docker Compose, .NET, and more — in one sidebar with AI-powered summaries.",
+      "url": "https://commandtree.dev",
+      "downloadUrl": "https://marketplace.visualstudio.com/items?itemName=nimblesite.commandtree",
+      "softwareRequirements": "Visual Studio Code",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "Nimblesite Pty Ltd",
+        "url": "https://www.nimblesite.co",
+      },
+    };
+    const scriptTag = `\n  <script type="application/ld+json">\n  ${JSON.stringify(softwareSchema, null, 2).split("\n").join("\n  ")}\n  </script>`;
     return content.replace("</head>", scriptTag + "\n</head>");
   });
 
