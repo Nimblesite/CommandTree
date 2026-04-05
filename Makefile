@@ -15,9 +15,11 @@ package: build
 test: build
 	npm run test:unit
 	npx vscode-test --coverage
+	node tools/check-coverage.mjs
 
 test-exclude-ci: build
 	npm run test:unit
 	npx vscode-test --coverage --grep @exclude-ci --invert
+	node tools/check-coverage.mjs
 
 ci: format lint build test package

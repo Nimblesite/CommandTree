@@ -83,6 +83,10 @@ Open a workspace and the CommandTree panel appears in the sidebar. All discovere
 | `commandtree.excludePatterns` | Glob patterns to exclude from discovery | `**/node_modules/**`, `**/.git/**`, etc. |
 | `commandtree.sortOrder` | Sort commands by `folder`, `name`, or `type` | `folder` |
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines. All pull requests must pass `make ci` before merging.
+
 ## License
 
 [MIT](LICENSE)
