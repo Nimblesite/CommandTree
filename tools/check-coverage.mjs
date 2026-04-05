@@ -20,7 +20,10 @@ let failed = false;
 
 for (const metric of METRICS) {
   const pct = total[metric].pct;
-  if (pct < THRESHOLD) {
+  if (typeof pct !== 'number' || Number.isNaN(pct)) {
+    console.error(`FAIL: ${metric} coverage is ${pct} — not a valid number. Coverage calculation is broken.`);
+    failed = true;
+  } else if (pct < THRESHOLD) {
     console.error(`FAIL: ${metric} ${pct}% < ${THRESHOLD}%`);
     failed = true;
   } else {

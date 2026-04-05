@@ -19,6 +19,7 @@ export default defineConfig({
         version: 'stable',
         workspaceFolder: testWorkspace,
         extensionDevelopmentPath: './',
+        srcDir: __dirname,
         mocha: {
             ui: 'tdd',
             timeout: 60000,
@@ -31,12 +32,16 @@ export default defineConfig({
         ]
     }],
     coverage: {
-        include: ['out/**/*.js'],
+        includeAll: true,
+        // @vscode/test-cli sets report.exclude.relativePath = false, which
+        // makes test-exclude match against absolute paths. Patterns must
+        // start with **/ so minimatch can match any prefix.
+        include: ['**/out/**/*.js'],
         exclude: [
-            'out/test/**/*.js',
-            'out/semantic/summariser.js',       // requires Copilot auth, not available in CI
-            'out/semantic/summaryPipeline.js',   // requires Copilot auth, not available in CI
-            'out/semantic/vscodeAdapters.js',    // requires Copilot auth, not available in CI
+            '**/out/test/**',
+            '**/out/semantic/summariser.js',       // requires Copilot auth, not available in CI
+            '**/out/semantic/summaryPipeline.js',   // requires Copilot auth, not available in CI
+            '**/out/semantic/vscodeAdapters.js',    // requires Copilot auth, not available in CI
         ],
         reporter: ['text', 'lcov', 'html', 'json-summary'],
         output: './coverage'
