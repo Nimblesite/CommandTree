@@ -1,5 +1,7 @@
 # CLAUDE.md - CommandTree Extension
 
+⚠️ CRITICAL: **Reduce token usage.** Check file size before loading. Write less. Delete fluff and dead code. Alert user when context is loaded with pointless files. ⚠️ 
+
 ## Too Many Cooks
 
 You are working with many other agents. Make sure there is effective cooperation
