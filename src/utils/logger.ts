@@ -6,17 +6,9 @@ import * as vscode from "vscode";
  */
 class Logger {
   private readonly channel: vscode.OutputChannel;
-  private enabled = true;
 
   public constructor() {
     this.channel = vscode.window.createOutputChannel("CommandTree Debug");
-  }
-
-  /**
-   * Enables or disables logging
-   */
-  public setEnabled(enabled: boolean): void {
-    this.enabled = enabled;
   }
 
   /**
@@ -30,10 +22,6 @@ class Logger {
    * Logs an info message
    */
   public info(message: string, data?: unknown): void {
-    /* istanbul ignore if -- logger is always enabled during tests */
-    if (!this.enabled) {
-      return;
-    }
     const timestamp = new Date().toISOString();
     const logLine =
       data !== undefined
@@ -46,10 +34,6 @@ class Logger {
    * Logs a warning message
    */
   public warn(message: string, data?: unknown): void {
-    /* istanbul ignore if -- logger is always enabled during tests */
-    if (!this.enabled) {
-      return;
-    }
     const timestamp = new Date().toISOString();
     const logLine =
       data !== undefined
@@ -62,10 +46,6 @@ class Logger {
    * Logs an error message
    */
   public error(message: string, data?: unknown): void {
-    /* istanbul ignore if -- logger is always enabled during tests */
-    if (!this.enabled) {
-      return;
-    }
     const timestamp = new Date().toISOString();
     const logLine =
       data !== undefined
@@ -78,15 +58,10 @@ class Logger {
    * Logs filter operations
    */
   public filter(operation: string, details: Record<string, unknown>): void {
-    /* istanbul ignore if -- logger is always enabled during tests */
-    if (!this.enabled) {
-      return;
-    }
     const timestamp = new Date().toISOString();
     const detailsStr = JSON.stringify(details);
     this.channel.appendLine(`[${timestamp}] FILTER: ${operation} | ${detailsStr}`);
   }
 }
 
-// Singleton instance
 export const logger = new Logger();

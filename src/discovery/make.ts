@@ -37,21 +37,22 @@ export async function discoverMakeTargets(workspaceRoot: string, excludePatterns
     const makeDir = path.dirname(file.fsPath);
     const category = simplifyPath(file.fsPath, workspaceRoot);
 
-    for (const target of targets) {
+    for (const { name, line } of targets) {
       // Skip internal targets (start with .)
-      if (target.startsWith(".")) {
+      if (name.startsWith(".")) {
         continue;
       }
 
       commands.push({
-        id: generateCommandId("make", file.fsPath, target),
-        label: target,
+        id: generateCommandId("make", file.fsPath, name),
+        label: name,
         type: "make",
         category,
-        command: `make ${target}`,
+        command: `make ${name}`,
         cwd: makeDir,
         filePath: file.fsPath,
         tags: [],
+        line,
       });
     }
   }
@@ -59,25 +60,30 @@ export async function discoverMakeTargets(workspaceRoot: string, excludePatterns
   return commands;
 }
 
+interface MakeTarget {
+  readonly name: string;
+  readonly line: number;
+}
+
 /**
- * Parses Makefile to extract target names.
+ * Parses Makefile to extract target names and their line numbers.
  */
-function parseMakeTargets(content: string): string[] {
-  const targets: string[] = [];
+function parseMakeTargets(content: string): MakeTarget[] {
+  const targets: MakeTarget[] = [];
+  const seen = new Set<string>();
   // Match lines like "target:" or "target: dependencies"
   // But not variable assignments like "VAR = value" or "VAR := value"
   const targetRegex = /^([a-zA-Z_][a-zA-Z0-9_-]*)\s*:/gm;
 
   let match;
   while ((match = targetRegex.exec(content)) !== null) {
-    const target = match[1];
-    if (target === undefined || target === "") {
+    const name = match[1];
+    if (name === undefined || name === "" || seen.has(name)) {
       continue;
     }
-    // Add target if not already present
-    if (!targets.includes(target)) {
-      targets.push(target);
-    }
+    seen.add(name);
+    const line = content.substring(0, match.index).split("\n").length;
+    targets.push({ name, line });
   }
 
   return targets;

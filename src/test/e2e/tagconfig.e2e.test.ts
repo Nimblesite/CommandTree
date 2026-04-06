@@ -40,16 +40,14 @@ suite("Junction Table Tagging E2E Tests", () => {
     await sleep(500);
 
     // Verify tag stored in database with exact command ID
-    const dbResult = getDb();
-    assert.ok(dbResult.ok, "Database must be available");
+    const handle = getDb();
 
-    const tagsResult = getTagsForCommand({
-      handle: dbResult.value,
+    const tags = getTagsForCommand({
+      handle,
       commandId: task.id,
     });
-    assert.ok(tagsResult.ok, "Should get tags for command");
-    assert.ok(tagsResult.value.length > 0, "Task should have at least one tag");
-    assert.ok(tagsResult.value.includes(testTag), `Task should have tag "${testTag}"`);
+    assert.ok(tags.length > 0, "Task should have at least one tag");
+    assert.ok(tags.includes(testTag), `Task should have tag "${testTag}"`);
 
     // Verify getAllTags includes the new tag (exercises CommandTreeProvider.getAllTags + TagConfig.getTagNames)
     const allTags = treeProvider.getAllTags();
@@ -74,28 +72,26 @@ suite("Junction Table Tagging E2E Tests", () => {
     await vscode.commands.executeCommand("commandtree.addTag", task, testTag);
     await sleep(500);
 
-    const dbResult = getDb();
-    assert.ok(dbResult.ok, "Database must be available");
+    const handle = getDb();
 
     // Verify tag exists
-    let tagsResult = getTagsForCommand({
-      handle: dbResult.value,
+    let tags = getTagsForCommand({
+      handle,
       commandId: task.id,
     });
-    assert.ok(tagsResult.ok && tagsResult.value.length > 0, "Tag should exist before removal");
-    assert.ok(tagsResult.value.includes(testTag), `Task should have tag "${testTag}"`);
+    assert.ok(tags.length > 0, "Tag should exist before removal");
+    assert.ok(tags.includes(testTag), `Task should have tag "${testTag}"`);
 
     // Remove tag via UI
     await vscode.commands.executeCommand("commandtree.removeTag", task, testTag);
     await sleep(500);
 
     // Verify tag removed from database
-    tagsResult = getTagsForCommand({
-      handle: dbResult.value,
+    tags = getTagsForCommand({
+      handle,
       commandId: task.id,
     });
-    assert.ok(tagsResult.ok, "Should get tags for command");
-    assert.ok(!tagsResult.value.includes(testTag), `Tag "${testTag}" should be removed from command ${task.id}`);
+    assert.ok(!tags.includes(testTag), `Tag "${testTag}" should be removed from command ${task.id}`);
   });
 
   // SPEC: database-schema/command-tags-junction
@@ -112,26 +108,24 @@ suite("Junction Table Tagging E2E Tests", () => {
     await vscode.commands.executeCommand("commandtree.addTag", task, testTag);
     await sleep(500);
 
-    const dbResult = getDb();
-    assert.ok(dbResult.ok, "Database must be available");
+    const handle = getDb();
 
-    const tagsResult1 = getTagsForCommand({
-      handle: dbResult.value,
+    const tags1 = getTagsForCommand({
+      handle,
       commandId: task.id,
     });
-    assert.ok(tagsResult1.ok && tagsResult1.value.length > 0, "Should have one tag");
-    const initialCount = tagsResult1.value.length;
+    assert.ok(tags1.length > 0, "Should have one tag");
+    const initialCount = tags1.length;
 
     // Try to add same tag again (should be ignored by INSERT OR IGNORE)
     await vscode.commands.executeCommand("commandtree.addTag", task, testTag);
     await sleep(500);
 
-    const tagsResult2 = getTagsForCommand({
-      handle: dbResult.value,
+    const tags2 = getTagsForCommand({
+      handle,
       commandId: task.id,
     });
-    assert.ok(tagsResult2.ok, "Should get tags for command");
-    assert.strictEqual(tagsResult2.value.length, initialCount, "Tag count should not increase when adding duplicate");
+    assert.strictEqual(tags2.length, initialCount, "Tag count should not increase when adding duplicate");
 
     // Clean up
     await vscode.commands.executeCommand("commandtree.removeTag", task, testTag);
@@ -156,17 +150,14 @@ suite("Junction Table Tagging E2E Tests", () => {
     await sleep(500);
 
     // Verify database has exact ID for task1 only
-    const dbResult = getDb();
-    assert.ok(dbResult.ok, "Database must be available");
+    const handle = getDb();
 
-    const commandIdsResult = getCommandIdsByTag({
-      handle: dbResult.value,
+    const taggedIds = getCommandIdsByTag({
+      handle,
       tagName: testTag,
     });
 
-    assert.ok(commandIdsResult.ok, "Should get command IDs for tag");
-    assert.ok(commandIdsResult.value.length > 0, "Should have at least one tagged command");
-    const taggedIds = commandIdsResult.value;
+    assert.ok(taggedIds.length > 0, "Should have at least one tagged command");
     assert.ok(taggedIds.includes(task1.id), `Tagged IDs should include task1 (${task1.id})`);
     assert.ok(!taggedIds.includes(task2.id), `Tagged IDs should NOT include task2 (${task2.id})`);
 
@@ -192,21 +183,18 @@ suite("Junction Table Tagging E2E Tests", () => {
     }
 
     // Verify pattern matching: "scripts" tag applies to shell tasks (type: "shell" pattern)
-    const dbResult = getDb();
-    assert.ok(dbResult.ok, "Database must be available");
-    const scriptsResult = getCommandIdsByTag({
-      handle: dbResult.value,
+    const handle = getDb();
+    const scriptsIds = getCommandIdsByTag({
+      handle,
       tagName: "scripts",
     });
-    assert.ok(scriptsResult.ok, "Should get command IDs for scripts tag");
-    assert.ok(scriptsResult.value.length > 0, "scripts tag should match shell commands");
+    assert.ok(scriptsIds.length > 0, "scripts tag should match shell commands");
 
     // Verify "debug" tag applies to launch configs (type: "launch" pattern)
-    const debugResult = getCommandIdsByTag({
-      handle: dbResult.value,
+    const debugIds = getCommandIdsByTag({
+      handle,
       tagName: "debug",
     });
-    assert.ok(debugResult.ok, "Should get command IDs for debug tag");
-    assert.ok(debugResult.value.length > 0, "debug tag should match launch configs");
+    assert.ok(debugIds.length > 0, "debug tag should match launch configs");
   });
 });

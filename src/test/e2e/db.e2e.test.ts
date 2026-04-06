@@ -97,37 +97,32 @@ suite("DB Unit Tests", () => {
     test("addTagToCommand is idempotent", () => {
       registerCommand({ handle, commandId: "cmd-tag-2", contentHash: "h2" });
       addTagToCommand({ handle, commandId: "cmd-tag-2", tagName: "deploy" });
-      const result = addTagToCommand({ handle, commandId: "cmd-tag-2", tagName: "deploy" });
-      assert.ok(result.ok);
+      addTagToCommand({ handle, commandId: "cmd-tag-2", tagName: "deploy" });
 
       const ids = getCommandIdsByTag({ handle, tagName: "deploy" });
-      assert.ok(ids.ok);
-      assert.strictEqual(ids.value.filter((id) => id === "cmd-tag-2").length, 1);
+      assert.strictEqual(ids.filter((id) => id === "cmd-tag-2").length, 1);
     });
 
     test("removeTagFromCommand removes junction record", () => {
       registerCommand({ handle, commandId: "cmd-tag-3", contentHash: "h3" });
       addTagToCommand({ handle, commandId: "cmd-tag-3", tagName: "test" });
-      const removeResult = removeTagFromCommand({
+      removeTagFromCommand({
         handle,
         commandId: "cmd-tag-3",
         tagName: "test",
       });
-      assert.ok(removeResult.ok);
 
       const ids = getCommandIdsByTag({ handle, tagName: "test" });
-      assert.ok(ids.ok);
-      assert.ok(!ids.value.includes("cmd-tag-3"));
+      assert.ok(!ids.includes("cmd-tag-3"));
     });
 
     test("removeTagFromCommand succeeds for non-existent tag", () => {
       registerCommand({ handle, commandId: "cmd-tag-4", contentHash: "h4" });
-      const result = removeTagFromCommand({
+      removeTagFromCommand({
         handle,
         commandId: "cmd-tag-4",
         tagName: "nonexistent",
       });
-      assert.ok(result.ok);
     });
 
     test("getAllTagNames returns all distinct tags", () => {
@@ -136,9 +131,8 @@ suite("DB Unit Tests", () => {
       addTagToCommand({ handle, commandId: "cmd-tags-5", tagName: "beta" });
 
       const result = getAllTagNames(handle);
-      assert.ok(result.ok);
-      assert.ok(result.value.includes("alpha"));
-      assert.ok(result.value.includes("beta"));
+      assert.ok(result.includes("alpha"));
+      assert.ok(result.includes("beta"));
     });
   });
 

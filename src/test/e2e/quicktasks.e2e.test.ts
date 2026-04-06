@@ -74,15 +74,13 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
       await sleep(1000);
 
       // Verify stored in database with 'quick' tag
-      const dbResult = getDb();
-      assert.ok(dbResult.ok, "Database must be available");
+      const handle = getDb();
 
-      const tagsResult = getTagsForCommand({
-        handle: dbResult.value,
+      const tags = getTagsForCommand({
+        handle,
         commandId: task.id,
       });
-      assert.ok(tagsResult.ok, "Should get tags for command");
-      assert.ok(tagsResult.value.includes(QUICK_TAG), `Task ${task.id} should have 'quick' tag in database`);
+      assert.ok(tags.includes(QUICK_TAG), `Task ${task.id} should have 'quick' tag in database`);
 
       // Verify the Quick Launch tree view shows the task
       const quickItems = quickProvider.getChildren();
@@ -112,15 +110,14 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
       await vscode.commands.executeCommand("commandtree.addToQuick", addItem);
       await sleep(1000);
 
-      const dbResult = getDb();
-      assert.ok(dbResult.ok, "Database must be available");
+      const handle = getDb();
 
       // Verify quick tag exists
-      let tagsResult = getTagsForCommand({
-        handle: dbResult.value,
+      let tags = getTagsForCommand({
+        handle,
         commandId: task.id,
       });
-      assert.ok(tagsResult.ok && tagsResult.value.includes(QUICK_TAG), "Quick tag should exist before removal");
+      assert.ok(tags.includes(QUICK_TAG), "Quick tag should exist before removal");
 
       // Remove from quick via UI
       const removeItem = createCommandNode(task);
@@ -128,12 +125,11 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
       await sleep(1000);
 
       // Verify junction record removed
-      tagsResult = getTagsForCommand({
-        handle: dbResult.value,
+      tags = getTagsForCommand({
+        handle,
         commandId: task.id,
       });
-      assert.ok(tagsResult.ok, "Should get tags for command");
-      assert.ok(!tagsResult.value.includes(QUICK_TAG), `Task ${task.id} should NOT have 'quick' tag after removal`);
+      assert.ok(!tags.includes(QUICK_TAG), `Task ${task.id} should NOT have 'quick' tag after removal`);
 
       // Verify tree view no longer shows the task
       const quickItemsAfterRemoval = quickProvider.getChildren();
@@ -166,16 +162,12 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
       await sleep(1000);
 
       // Verify order in database
-      const dbResult = getDb();
-      assert.ok(dbResult.ok, "Database must be available");
+      const handle = getDb();
 
-      const orderedIdsResult = getCommandIdsByTag({
-        handle: dbResult.value,
+      const orderedIds = getCommandIdsByTag({
+        handle,
         tagName: QUICK_TAG,
       });
-      assert.ok(orderedIdsResult.ok, "Should get ordered command IDs");
-
-      const orderedIds = orderedIdsResult.value;
       const index1 = orderedIds.indexOf(task1.id);
       const index2 = orderedIds.indexOf(task2.id);
       const index3 = orderedIds.indexOf(task3.id);
@@ -222,15 +214,13 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
       await vscode.commands.executeCommand("commandtree.addToQuick", item);
       await sleep(1000);
 
-      const dbResult = getDb();
-      assert.ok(dbResult.ok, "Database must be available");
+      const handle = getDb();
 
-      const initialIdsResult = getCommandIdsByTag({
-        handle: dbResult.value,
+      const initialIds = getCommandIdsByTag({
+        handle,
         tagName: QUICK_TAG,
       });
-      assert.ok(initialIdsResult.ok, "Should get command IDs");
-      const initialCount = initialIdsResult.value.filter((id) => id === task.id).length;
+      const initialCount = initialIds.filter((id) => id === task.id).length;
       assert.strictEqual(initialCount, 1, "Should have exactly one instance of task");
 
       // Try to add again (should be ignored by INSERT OR IGNORE)
@@ -238,12 +228,11 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
       await vscode.commands.executeCommand("commandtree.addToQuick", item2);
       await sleep(1000);
 
-      const afterIdsResult = getCommandIdsByTag({
-        handle: dbResult.value,
+      const afterIds = getCommandIdsByTag({
+        handle,
         tagName: QUICK_TAG,
       });
-      assert.ok(afterIdsResult.ok, "Should get command IDs");
-      const afterCount = afterIdsResult.value.filter((id) => id === task.id).length;
+      const afterCount = afterIds.filter((id) => id === task.id).length;
       assert.strictEqual(afterCount, 1, "Should still have exactly one instance (no duplicates)");
 
       // Clean up
@@ -276,17 +265,14 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
       await sleep(1000);
 
       // Check database directly for display_order values
-      const dbResult = getDb();
-      assert.ok(dbResult.ok, "Database must be available");
+      const handle = getDb();
 
-      const orderedIdsResult = getCommandIdsByTag({
-        handle: dbResult.value,
+      const orderedIds = getCommandIdsByTag({
+        handle,
         tagName: QUICK_TAG,
       });
-      assert.ok(orderedIdsResult.ok, "Should get ordered IDs");
 
       // Verify tasks appear in insertion order
-      const orderedIds = orderedIdsResult.value;
       for (let i = 0; i < tasks.length; i++) {
         const task = tasks[i];
         if (task !== undefined) {

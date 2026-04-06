@@ -96,6 +96,7 @@ export interface CommandItem {
   readonly description?: string;
   readonly summary?: string;
   readonly securityWarning?: string;
+  readonly line?: number;
 }
 
 /**
@@ -114,6 +115,7 @@ export interface MutableCommandItem {
   description?: string;
   summary?: string;
   securityWarning?: string;
+  line?: number;
 }
 
 /**

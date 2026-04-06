@@ -67,7 +67,10 @@ export function createCommandNode(task: CommandItem): CommandTreeItem {
     command: {
       command: "vscode.open",
       title: "Open File",
-      arguments: [vscode.Uri.file(task.filePath)],
+      arguments:
+        task.line !== undefined
+          ? [vscode.Uri.file(task.filePath), { selection: new vscode.Range(task.line - 1, 0, task.line - 1, 0) }]
+          : [vscode.Uri.file(task.filePath)],
     },
   });
 }

@@ -144,10 +144,6 @@ export class QuickTasksProvider
     }
 
     const orderedIds = this.fetchOrderedQuickIds();
-    if (orderedIds === undefined) {
-      return;
-    }
-
     const reordered = this.computeReorder({ orderedIds, draggedTask, target });
     if (reordered === undefined) {
       return;
@@ -160,18 +156,9 @@ export class QuickTasksProvider
   /**
    * Fetches ordered command IDs for the quick tag from the DB.
    */
-  private fetchOrderedQuickIds(): string[] | undefined {
-    const dbResult = getDb();
-    /* istanbul ignore if -- DB is always initialised before tree views render */
-    if (!dbResult.ok) {
-      return undefined;
-    }
-    const orderedIdsResult = getCommandIdsByTag({
-      handle: dbResult.value,
-      tagName: QUICK_TAG,
-    });
-    /* istanbul ignore next -- getCommandIdsByTag cannot fail with valid DB handle */
-    return orderedIdsResult.ok ? orderedIdsResult.value : undefined;
+  private fetchOrderedQuickIds(): string[] {
+    const handle = getDb();
+    return getCommandIdsByTag({ handle, tagName: QUICK_TAG });
   }
 
   /**
@@ -208,15 +195,11 @@ export class QuickTasksProvider
    * Persists display_order for each command in the reordered list.
    */
   private persistDisplayOrder(reordered: string[]): void {
-    const dbResult = getDb();
-    /* istanbul ignore if -- DB is always initialised before tree views render */
-    if (!dbResult.ok) {
-      return;
-    }
+    const handle = getDb();
     for (let i = 0; i < reordered.length; i++) {
       const commandId = reordered[i];
       if (commandId !== undefined) {
-        dbResult.value.db.run(
+        handle.db.run(
           `UPDATE command_tags
                      SET display_order = ?
                      WHERE command_id = ?

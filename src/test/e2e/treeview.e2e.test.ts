@@ -7,7 +7,15 @@
  */
 
 import * as assert from "assert";
-import { activateExtension, sleep, getCommandTreeProvider, getLabelString, collectLeafTasks } from "../helpers/helpers";
+import * as vscode from "vscode";
+import {
+  activateExtension,
+  sleep,
+  getCommandTreeProvider,
+  getLabelString,
+  collectLeafTasks,
+  collectLeafItems,
+} from "../helpers/helpers";
 import { type CommandTreeItem, isCommandItem } from "../../models/TaskItem";
 
 // TODO: No corresponding section in spec
@@ -139,6 +147,62 @@ suite("TreeView E2E Tests", () => {
           assert.ok(!seenTask, "Folder node must not appear after a file node — folders come first");
         }
       }
+    });
+  });
+
+  suite("Make Target Line Navigation", () => {
+    test("clicking a make target opens the Makefile at the target's line", async function () {
+      this.timeout(15000);
+      const provider = getCommandTreeProvider();
+      const allItems = await collectLeafItems(provider);
+      const makeItems = allItems.filter((i) => isCommandItem(i.data) && i.data.type === "make");
+      assert.ok(makeItems.length > 0, "Should discover at least one make target");
+
+      for (const item of makeItems) {
+        assert.ok(isCommandItem(item.data), "Item data must be a CommandItem");
+        assert.ok(item.data.line !== undefined, `Make target "${item.data.label}" must have a line number`);
+        assert.ok(item.data.line > 0, `Make target "${item.data.label}" line must be positive`);
+
+        assert.ok(item.command !== undefined, "Make target must have a click command");
+        assert.strictEqual(item.command.command, "vscode.open", "Click must use vscode.open");
+        const args = item.command.arguments;
+        assert.ok(args !== undefined && args.length === 2, "Click command must have URI and options arguments");
+
+        const uri = args[0] as vscode.Uri;
+        assert.ok(uri.fsPath.endsWith("Makefile"), "URI must point to a Makefile");
+
+        const options = args[1] as { selection: vscode.Range };
+        assert.ok(options.selection !== undefined, "Options must include a selection range");
+        assert.strictEqual(
+          options.selection.start.line,
+          item.data.line - 1,
+          `Selection must start at line ${item.data.line - 1} (0-indexed) for target "${item.data.label}"`
+        );
+      }
+    });
+
+    test("make targets have correct line numbers matching the Makefile", async function () {
+      this.timeout(15000);
+      const provider = getCommandTreeProvider();
+      const allTasks = await collectLeafTasks(provider);
+      const makeTasks = allTasks.filter((t) => t.type === "make");
+
+      // Verify specific targets from the fixture Makefile
+      const allTarget = makeTasks.find((t) => t.label === "all");
+      assert.ok(allTarget !== undefined, "Should find 'all' target");
+      assert.strictEqual(allTarget.line, 3, "'all' target is on line 3 of the fixture Makefile");
+
+      const buildTarget = makeTasks.find((t) => t.label === "build");
+      assert.ok(buildTarget !== undefined, "Should find 'build' target");
+      assert.strictEqual(buildTarget.line, 5, "'build' target is on line 5 of the fixture Makefile");
+
+      const testTarget = makeTasks.find((t) => t.label === "test");
+      assert.ok(testTarget !== undefined, "Should find 'test' target");
+      assert.strictEqual(testTarget.line, 8, "'test' target is on line 8 of the fixture Makefile");
+
+      const cleanTarget = makeTasks.find((t) => t.label === "clean");
+      assert.ok(cleanTarget !== undefined, "Should find 'clean' target");
+      assert.strictEqual(cleanTarget.line, 11, "'clean' target is on line 11 of the fixture Makefile");
     });
   });
 
