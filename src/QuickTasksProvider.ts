@@ -9,9 +9,8 @@ import type { CommandItem, CommandTreeItem } from "./models/TaskItem";
 import { isCommandItem } from "./models/TaskItem";
 import { TagConfig } from "./config/TagConfig";
 import { getDb } from "./db/lifecycle";
-import { getCommandIdsByTag } from "./db/db";
+import { getCommandIdsByTag, reorderTagCommands } from "./db/db";
 import { createCommandNode, createPlaceholderNode } from "./tree/nodeFactory";
-import { logger } from "./utils/logger";
 
 const QUICK_TASK_MIME_TYPE = "application/vnd.commandtree.quicktask";
 const QUICK_TAG = "quick";
@@ -107,8 +106,7 @@ export class QuickTasksProvider
   private sortByDisplayOrder(tasks: CommandItem[]): CommandItem[] {
     const dbResult = getDb();
     if (!dbResult.ok) {
-      logger.warn("sortByDisplayOrder: DB unavailable", { error: dbResult.error });
-      return [...tasks].sort((a, b) => a.label.localeCompare(b.label));
+      return tasks.sort((a, b) => a.label.localeCompare(b.label));
     }
     const orderedIds = getCommandIdsByTag({ handle: dbResult.value, tagName: QUICK_TAG });
     return [...tasks].sort((a, b) => {
@@ -149,6 +147,10 @@ export class QuickTasksProvider
     }
 
     const orderedIds = this.fetchOrderedQuickIds();
+    if (orderedIds === undefined) {
+      return;
+    }
+
     const reordered = this.computeReorder({ orderedIds, draggedTask, target });
     if (reordered === undefined) {
       return;
@@ -161,11 +163,10 @@ export class QuickTasksProvider
   /**
    * Fetches ordered command IDs for the quick tag from the DB.
    */
-  private fetchOrderedQuickIds(): string[] {
+  private fetchOrderedQuickIds(): string[] | undefined {
     const dbResult = getDb();
     if (!dbResult.ok) {
-      logger.warn("fetchOrderedQuickIds: DB unavailable", { error: dbResult.error });
-      return [];
+      return undefined;
     }
     return getCommandIdsByTag({ handle: dbResult.value, tagName: QUICK_TAG });
   }
@@ -206,22 +207,9 @@ export class QuickTasksProvider
   private persistDisplayOrder(reordered: string[]): void {
     const dbResult = getDb();
     if (!dbResult.ok) {
-      logger.warn("persistDisplayOrder: DB unavailable", { error: dbResult.error });
       return;
     }
-    const handle = dbResult.value;
-    for (let i = 0; i < reordered.length; i++) {
-      const commandId = reordered[i];
-      if (commandId !== undefined) {
-        handle.db.run(
-          `UPDATE command_tags
-                     SET display_order = ?
-                     WHERE command_id = ?
-                     AND tag_id = (SELECT tag_id FROM tags WHERE tag_name = ?)`,
-          [i, commandId, QUICK_TAG]
-        );
-      }
-    }
+    reorderTagCommands({ handle: dbResult.value, tagName: QUICK_TAG, orderedCommandIds: reordered });
   }
 
   /**

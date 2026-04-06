@@ -162,7 +162,7 @@ suite("Quick Launch E2E Tests (SQLite Junction Table)", () => {
       await sleep(1000);
 
       // Verify order in database
-      const handle = getDb();
+      const handle = getDbOrThrow();
 
       const orderedIds = getCommandIdsByTag({
         handle,

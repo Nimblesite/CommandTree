@@ -92,15 +92,14 @@ export function syncTagsFromConfig({
   }
   const dbResult = getDb();
   if (!dbResult.ok) {
-    logger.warn("syncTagsFromConfig: DB unavailable", { error: dbResult.error });
+    logger.warn("DB not available, skipping tag sync", { error: dbResult.error });
     return false;
   }
-  const handle = dbResult.value;
   for (const [tagName, patterns] of Object.entries(config.tags)) {
-    const existingIds = getCommandIdsByTag({ handle, tagName });
+    const existingIds = getCommandIdsByTag({ handle: dbResult.value, tagName });
     const currentIds = new Set(existingIds);
     const matchedIds = collectMatchedIds(patterns, allTasks);
-    syncTagDiff({ handle, tagName, currentIds, matchedIds });
+    syncTagDiff({ handle: dbResult.value, tagName, currentIds, matchedIds });
   }
   logger.info("Tag sync complete");
   return true;

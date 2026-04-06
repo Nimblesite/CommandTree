@@ -13,7 +13,7 @@ import { computeContentHash } from "../db/db";
 import type { FileSystemAdapter } from "./adapters";
 import type { SummaryResult } from "./summariser";
 import { selectCopilotModel, summariseScript } from "./summariser";
-import { initDb, getDbOrThrow } from "../db/lifecycle";
+import { initDb, getDb } from "../db/lifecycle";
 import { upsertSummary, getRow, registerCommand } from "../db/db";
 import type { DbHandle } from "../db/db";
 
@@ -196,7 +196,11 @@ export async function summariseAllTasks(params: {
     return err(modelResult.error);
   }
 
-  const handle = getDbOrThrow();
+  const dbResult = getDb();
+  if (!dbResult.ok) {
+    return err(dbResult.error);
+  }
+  const handle = dbResult.value;
 
   const pending = await findPendingSummaries({
     handle,

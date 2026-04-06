@@ -15,28 +15,29 @@ CommandTree is a VS Code extension that discovers and organizes runnable tasks (
 **Test command:** `make test`
 **Lint command:** `make lint`
 
-## Too Many Cooks (Multi-Agent Coordination)
-
-If the TMC server is available:
-1. Register immediately: descriptive name, intent, files you will touch
-2. Before editing any file: lock it via TMC
-3. Broadcast your plan before starting work
-4. Check messages every few minutes
-5. Release locks immediately when done
-6. Never edit a locked file — wait or find another approach
-
-## Hard Rules — Universal (no exceptions)
+## Hard Rules (no exceptions)
 
 - **DO NOT use git commands.** No `git add`, `git commit`, `git push`, `git checkout`, `git merge`, `git rebase`, or any other git command. CI and GitHub Actions handle git.
 - **ZERO DUPLICATION.** Before writing any code, search the codebase for existing implementations. Move code, don't copy it.
-- **NO THROWING EXCEPTIONS.** Return `Result<T,E>` or the language equivalent. Exceptions are only for unrecoverable bugs (panic-level).
-- **NO REGEX on structured data.** Never parse JSON, YAML, TOML, code, or any structured format with regex. Use proper parsers, AST tools, or library functions. If text matching is absolutely necessary, prefer Regex.
+- **NO THROWING EXCEPTIONS.** Return `Result<T,E>` using a discriminated union. Exceptions are only for unrecoverable bugs (panic-level).
+- **NO REGEX on structured data.** Never parse JSON, YAML, TOML, code, or any structured format with regex. Use proper parsers, AST tools, or library functions.
 - **NO PLACEHOLDERS.** If something isn't implemented, leave a loud compilation error with TODO. Never write code that silently does nothing.
 - **Functions < 20 lines.** Refactor aggressively. If a function exceeds 20 lines, split it.
 - **Files < 450 lines.** If a file exceeds 450 lines, extract modules.
+- **No suppressing linter warnings.** Fix the code, not the linter. Fix lint errors IMMEDIATELY.
+- **CENTRALIZE global state** in one type/file.
+- **TypeScript strict mode** — No `any`, no implicit types, all lints set to error. `tsconfig.json` must have `"strict": true`.
+- No `!` (non-null assertion) — use optional chaining or explicit guards.
+- No implicit `any` — all function parameters and return types must be annotated.
+- No `// @ts-ignore` or `// @ts-nocheck`.
+- No `as Type` casts without a comment explaining why it's safe.
+- **Decouple providers from the VS Code SDK** — No vscode sdk use within the providers.
+
+
+## Principles
+
 - **100% test coverage is the goal.** Never delete or skip tests. Never remove assertions.
 - **Prefer E2E/integration tests.** Unit tests are acceptable only for isolating problems.
-- **No suppressing linter warnings.** Fix the code, not the linter.
 - **Pure functions** over statements. Prefer const and immutable patterns.
 - **No string literals** — Named constants only, in ONE location.
 - **Named parameters** — Use object params for functions with 3+ args.
@@ -58,19 +59,15 @@ If the TMC server is available:
 |----------|---------|-------|
 | TypeScript/Node | `pino` | JSON structured logging; use `pino-pretty` for dev |
 
-## Hard Rules — TypeScript
+## Too Many Cooks (Multi-Agent Coordination)
 
-- **CENTRALIZE global state** Keep it in one type/file.
-- **TypeScript strict mode** — No `any`, no implicit types, turn all lints up to error
-- No `!` (non-null assertion) — use optional chaining or explicit guards
-- No implicit `any` — all function parameters and return types must be annotated
-- No `// @ts-ignore` or `// @ts-nocheck`
-- No `as Type` casts without a comment explaining why it's safe
-- Strict mode always on (`tsconfig.json` must have `"strict": true`)
-- No throwing — return `Result<T, E>` using a discriminated union
-- **Regularly run the linter** — Fix lint errors IMMEDIATELY
-- **Decouple providers from the VSCODE SDK** — No vscode sdk use within the providers
-- **Ignoring lints = illegal** — Fix violations immediately
+If the TMC server is available:
+1. Register immediately: descriptive name, intent, files you will touch
+2. Before editing any file: lock it via TMC
+3. Broadcast your plan before starting work
+4. Check messages every few minutes
+5. Release locks immediately when done
+6. Never edit a locked file — wait or find another approach
 
 ### CSS
 

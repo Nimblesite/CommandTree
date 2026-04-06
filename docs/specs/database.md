@@ -81,6 +81,29 @@ CRITICAL: No backwards compatibility. If the database structure is wrong, the ex
 ### Test Coverage
 - [db.e2e.test.ts](../src/test/e2e/db.e2e.test.ts): "addTagToCommand creates tag and junction record", "addTagToCommand is idempotent", "removeTagFromCommand removes junction record", "removeTagFromCommand succeeds for non-existent tag"
 
+## Lock Recovery
+
+**DB-LOCK-RECOVERY**
+
+SQLite databases can become locked by stale processes, crashed extensions, or multiple VS Code windows. When this happens, the extension MUST recover automatically.
+
+### Behavior
+
+1. On `initDb`, if the database open or schema init fails with a lock error ("locked" or "SQLITE_BUSY"):
+   - Retry every 1 second for up to 10 seconds
+   - If retries are exhausted, forcefully remove all lock artifacts and retry once more
+2. Lock artifacts to remove:
+   - `.lock` directory (SQLite directory-based locking)
+   - `-journal` file (rollback journal)
+   - `-wal` file (write-ahead log)
+   - `-shm` file (shared memory)
+3. `initDb` returns `Result<DbHandle, string>` — never throws
+4. `getDb` returns `Result<DbHandle, string>` — never throws
+5. All callers handle the error variant gracefully (log warning, degrade to empty state)
+
+### Test Coverage
+- [dbLockRecovery.unit.test.ts](../src/test/unit/dbLockRecovery.unit.test.ts): "removes .lock directory", "removes -journal file", "removes -wal file", "removes -shm file", "removes all lock artifacts at once", "succeeds when no lock artifacts exist", "succeeds on clean workspace", "returns same handle on second call", "recovers after stale lock files"
+
 ## Content Hashing
 
 **SPEC-DB-050**

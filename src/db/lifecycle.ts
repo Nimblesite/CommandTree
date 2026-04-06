@@ -72,7 +72,7 @@ export function getDb(): Result<DbHandle, string> {
 
 /**
  * Returns the database handle, throwing if not initialised.
- * Use this in code paths where the DB is guaranteed to be available.
+ * Use in code paths where the DB is guaranteed to be available.
  */
 export function getDbOrThrow(): DbHandle {
   const result = getDb();
@@ -176,8 +176,10 @@ export function removeLockFiles(dbPath: string): void {
   }
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+async function sleep(ms: number): Promise<void> {
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 // Test-only: reset internal state

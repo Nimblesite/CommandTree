@@ -5,7 +5,7 @@
  */
 
 import type { CommandItem } from "../models/TaskItem";
-import { getDbOrThrow } from "../db/lifecycle";
+import { getDb } from "../db/lifecycle";
 import {
   addTagToCommand,
   removeTagFromCommand,
@@ -22,12 +22,16 @@ export class TagConfig {
    * Loads all tag assignments from SQLite junction table.
    */
   public load(): void {
-    const handle = getDbOrThrow();
-    const tagNames = getAllTagNames(handle);
+    const dbResult = getDb();
+    if (!dbResult.ok) {
+      this.commandTagsMap = new Map();
+      return;
+    }
 
+    const tagNames = getAllTagNames(dbResult.value);
     const map = new Map<string, string[]>();
     for (const tagName of tagNames) {
-      const commandIds = getCommandIdsByTag({ handle, tagName });
+      const commandIds = getCommandIdsByTag({ handle: dbResult.value, tagName });
       for (const commandId of commandIds) {
         const tags = map.get(commandId) ?? [];
         tags.push(tagName);
@@ -53,7 +57,11 @@ export class TagConfig {
    * Gets all tag names.
    */
   public getTagNames(): string[] {
-    return getAllTagNames(getDbOrThrow());
+    const dbResult = getDb();
+    if (!dbResult.ok) {
+      return [];
+    }
+    return getAllTagNames(dbResult.value);
   }
 
   /**
@@ -61,7 +69,11 @@ export class TagConfig {
    * Adds a task to a tag by creating junction record with exact command ID.
    */
   public addTaskToTag(task: CommandItem, tagName: string): void {
-    addTagToCommand({ handle: getDbOrThrow(), commandId: task.id, tagName });
+    const dbResult = getDb();
+    if (!dbResult.ok) {
+      return;
+    }
+    addTagToCommand({ handle: dbResult.value, commandId: task.id, tagName });
     this.load();
   }
 
@@ -70,7 +82,11 @@ export class TagConfig {
    * Removes a task from a tag by deleting junction record.
    */
   public removeTaskFromTag(task: CommandItem, tagName: string): void {
-    removeTagFromCommand({ handle: getDbOrThrow(), commandId: task.id, tagName });
+    const dbResult = getDb();
+    if (!dbResult.ok) {
+      return;
+    }
+    removeTagFromCommand({ handle: dbResult.value, commandId: task.id, tagName });
     this.load();
   }
 
@@ -79,7 +95,11 @@ export class TagConfig {
    * Gets ordered command IDs for a tag (ordered by display_order).
    */
   public getOrderedCommandIds(tagName: string): string[] {
-    return getCommandIdsByTag({ handle: getDbOrThrow(), tagName });
+    const dbResult = getDb();
+    if (!dbResult.ok) {
+      return [];
+    }
+    return getCommandIdsByTag({ handle: dbResult.value, tagName });
   }
 
   /**
@@ -87,7 +107,11 @@ export class TagConfig {
    * Reorders commands for a tag by updating display_order in junction table.
    */
   public reorderCommands(tagName: string, orderedCommandIds: string[]): void {
-    reorderTagCommands({ handle: getDbOrThrow(), tagName, orderedCommandIds });
+    const dbResult = getDb();
+    if (!dbResult.ok) {
+      return;
+    }
+    reorderTagCommands({ handle: dbResult.value, tagName, orderedCommandIds });
     this.load();
   }
 }

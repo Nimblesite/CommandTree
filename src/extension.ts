@@ -28,22 +28,27 @@ export async function activate(context: vscode.ExtensionContext): Promise<Extens
     logger.warn("No workspace root found, extension not activating");
     return;
   }
-  try {
-    logger.info("Initialising database");
-    initDatabase(workspaceRoot);
-    logger.info("Database initialised, creating providers");
-  } catch (e: unknown) {
-    logger.error("Database init FAILED", {
-      error: e instanceof Error ? e.message : String(e),
-      stack: e instanceof Error ? e.stack : undefined,
-    });
-  }
+  await initDatabaseSafe(workspaceRoot);
   treeProvider = new CommandTreeProvider(workspaceRoot);
   quickTasksProvider = new QuickTasksProvider();
   taskRunner = new TaskRunner();
-  logger.info("Registering tree views and commands");
   registerTreeViews(context);
   registerCommands(context);
+  setupWatchers(context, workspaceRoot);
+  await initialDiscovery(workspaceRoot);
+  initAiSummaries(workspaceRoot);
+  logger.info("Extension activation complete");
+  return { commandTreeProvider: treeProvider, quickTasksProvider };
+}
+
+async function initDatabaseSafe(workspaceRoot: string): Promise<void> {
+  const result = await initDb(workspaceRoot);
+  if (!result.ok) {
+    logger.error("Database init returned error", { error: result.error });
+  }
+}
+
+function setupWatchers(context: vscode.ExtensionContext, workspaceRoot: string): void {
   setupFileWatchers({
     context,
     onTaskFileChange: () => {
@@ -61,34 +66,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<Extens
       });
     },
   });
-  try {
-    logger.info("Starting syncQuickTasks (initial refresh)");
-    await syncQuickTasks();
-    logger.info("syncQuickTasks complete", { taskCount: treeProvider.getAllTasks().length });
-  } catch (e: unknown) {
-    logger.error("syncQuickTasks FAILED", {
-      error: e instanceof Error ? e.message : String(e),
-      stack: e instanceof Error ? e.stack : undefined,
-    });
-  }
-  try {
-    await registerDiscoveredCommands(workspaceRoot);
-    logger.info("Syncing tags from JSON");
-    await syncTagsFromJson(workspaceRoot);
-  } catch (e: unknown) {
-    logger.error("Post-discovery steps FAILED", {
-      error: e instanceof Error ? e.message : String(e),
-      stack: e instanceof Error ? e.stack : undefined,
-    });
-  }
-  logger.info("Initialising AI summaries");
-  initAiSummaries(workspaceRoot);
-  logger.info("Extension activation complete");
-  return { commandTreeProvider: treeProvider, quickTasksProvider };
 }
 
-function initDatabase(workspaceRoot: string): void {
-  initDb(workspaceRoot);
+async function initialDiscovery(workspaceRoot: string): Promise<void> {
+  await syncQuickTasks();
+  logger.info("syncQuickTasks complete", { taskCount: treeProvider.getAllTasks().length });
+  await registerDiscoveredCommands(workspaceRoot);
+  await syncTagsFromJson(workspaceRoot);
 }
 
 function registerTreeViews(context: vscode.ExtensionContext): void {
