@@ -6,7 +6,7 @@ test-fixtures/**
 out/test/**
 node_modules/**
 !node_modules/node-sqlite3-wasm/**
-scripts/**
+tools/**
 .too_many_cooks/**
 .claude/**
 .github/**
