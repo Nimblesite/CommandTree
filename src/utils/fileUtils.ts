@@ -16,6 +16,15 @@ export async function readFile(uri: vscode.Uri): Promise<Result<string, string>>
 }
 
 /**
+ * Reads a file and returns its content. Throws on failure.
+ * Use in discovery modules where errors are caught by the orchestrator.
+ */
+export async function readFileContent(uri: vscode.Uri): Promise<string> {
+  const bytes = await vscode.workspace.fs.readFile(uri);
+  return new TextDecoder().decode(bytes);
+}
+
+/**
  * Parses JSON safely, returning a Result instead of throwing.
  */
 export function parseJson<T>(content: string): Result<T, string> {
