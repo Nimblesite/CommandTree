@@ -5,8 +5,6 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import type { Result } from "../models/Result";
-import { ok, err } from "../models/Result";
 import { logger } from "../utils/logger";
 import type { DbHandle } from "./db";
 import { openDatabase, initSchema, closeDatabase } from "./db";
@@ -20,49 +18,37 @@ let dbHandle: DbHandle | null = null;
  * Initialises the SQLite database singleton.
  * Re-creates if the DB file was deleted externally.
  */
-export function initDb(workspaceRoot: string): Result<DbHandle, string> {
+export function initDb(workspaceRoot: string): DbHandle {
   if (dbHandle !== null && fs.existsSync(dbHandle.path)) {
-    return ok(dbHandle);
+    return dbHandle;
   }
-  /* istanbul ignore next -- stale handle only occurs if DB file deleted externally while running */
   resetStaleHandle();
 
   const dbDir = path.join(workspaceRoot, COMMANDTREE_DIR);
-  try {
-    fs.mkdirSync(dbDir, { recursive: true });
-  } /* istanbul ignore next -- filesystem errors creating .commandtree dir not reproducible in tests */ catch (e) {
-    const msg = e instanceof Error ? e.message : "Failed to create directory";
-    return err(msg);
-  }
+  fs.mkdirSync(dbDir, { recursive: true });
 
   const dbPath = path.join(dbDir, DB_FILENAME);
   const openResult = openDatabase(dbPath);
   if (!openResult.ok) {
-    return openResult;
+    throw new Error(openResult.error);
   }
 
-  const schemaResult = initSchema(openResult.value);
-  if (!schemaResult.ok) {
-    closeDatabase(openResult.value);
-    return err(schemaResult.error);
-  }
-
+  initSchema(openResult.value);
   dbHandle = openResult.value;
   logger.info("SQLite database initialised", { path: dbPath });
-  return ok(dbHandle);
+  return dbHandle;
 }
 
 /**
  * Returns the current database handle.
- * Invalidates a stale handle if the DB file was deleted.
+ * Throws if the database has not been initialised.
  */
-export function getDb(): Result<DbHandle, string> {
+export function getDb(): DbHandle {
   if (dbHandle !== null && fs.existsSync(dbHandle.path)) {
-    return ok(dbHandle);
+    return dbHandle;
   }
-  /* istanbul ignore next -- stale handle only occurs if DB file deleted externally while running */
   resetStaleHandle();
-  return err("Database not initialised. Call initDb first.");
+  throw new Error("Database not initialised. Call initDb first.");
 }
 
 function resetStaleHandle(): void {
