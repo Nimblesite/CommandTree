@@ -9,12 +9,63 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import { activateExtension, sleep, getFixturePath, createMockTaskItem } from "../helpers/helpers";
 import type { TestContext } from "../helpers/helpers";
 
 interface PackageJson {
   scripts?: Record<string, string>;
+}
+
+interface RendererLogWatcher {
+  capture: () => string[];
+}
+
+function findCurrentRendererLog(): string | undefined {
+  // @vscode/test-cli sets --user-data-dir to .vscode-test/user-data; logs go under logs/<timestamp>/window1/renderer.log
+  const searchRoots = [
+    path.resolve(process.cwd(), ".vscode-test/user-data/logs"),
+    path.resolve(process.cwd(), "../.vscode-test/user-data/logs"),
+    path.resolve(process.cwd(), "../../.vscode-test/user-data/logs"),
+  ];
+  for (const root of searchRoots) {
+    if (!fs.existsSync(root)) continue;
+    const sessions = fs
+      .readdirSync(root)
+      .filter((n) => /^\d{8}T\d{6}$/.test(n))
+      .sort();
+    for (let i = sessions.length - 1; i >= 0; i--) {
+      const logPath = path.join(root, sessions[i] ?? "", "window1", "renderer.log");
+      if (fs.existsSync(logPath)) return logPath;
+    }
+  }
+  return undefined;
+}
+
+function watchRendererLog(): RendererLogWatcher {
+  const logPath = findCurrentRendererLog();
+  const baselineSize = logPath !== undefined && fs.existsSync(logPath) ? fs.statSync(logPath).size : 0;
+  return {
+    capture: (): string[] => {
+      if (logPath === undefined || !fs.existsSync(logPath)) {
+        throw new Error(`Renderer log not found — cannot verify absence of xterm errors. Searched under .vscode-test/user-data/logs`);
+      }
+      const fd = fs.openSync(logPath, "r");
+      try {
+        const currentSize = fs.statSync(logPath).size;
+        const length = Math.max(0, currentSize - baselineSize);
+        if (length === 0) return [];
+        const buf = Buffer.alloc(length);
+        fs.readSync(fd, buf, 0, length, baselineSize);
+        const text = buf.toString("utf8");
+        const lines = text.split("\n");
+        return lines.filter((l) => l.includes("dimensions") || l.includes("TypeError"));
+      } finally {
+        fs.closeSync(fd);
+      }
+    },
+  };
 }
 
 // Spec: command-execution
@@ -139,7 +190,7 @@ suite("Command Execution E2E Tests", () => {
       this.timeout(10000);
 
       const packageJson = JSON.parse(fs.readFileSync(getFixturePath("package.json"), "utf8")) as PackageJson;
-      const scripts = packageJson.scripts;
+      const {scripts} = packageJson;
 
       assert.ok(scripts !== undefined, "Should have scripts object");
       assert.ok(scripts["build"] !== undefined, "Should have build script");
@@ -622,7 +673,7 @@ suite("Command Execution E2E Tests", () => {
   // Spec: command-execution
   suite("Terminal Execution Modes", () => {
     test("runInCurrentTerminal creates terminal when none exists", async function () {
-      this.timeout(15000);
+      this.timeout(20000);
 
       for (const t of vscode.window.terminals) {
         t.dispose();
@@ -632,25 +683,73 @@ suite("Command Execution E2E Tests", () => {
       const initialCount = vscode.window.terminals.length;
       assert.strictEqual(initialCount, 0, "Should start with no terminals");
 
+      const markerFile = path.join(os.tmpdir(), `commandtree-test-create-${Date.now()}-${Math.random()}.marker`);
+      if (fs.existsSync(markerFile)) {
+        fs.unlinkSync(markerFile);
+      }
+
       const shellTask = createMockTaskItem({
         type: "shell",
         label: "Create Terminal Test",
-        command: 'echo "terminal created"',
+        command: `echo created > "${markerFile}"`,
         cwd: context.workspaceRoot,
         filePath: path.join(context.workspaceRoot, "scripts/test.sh"),
       });
 
       const commandTreeItem = { data: shellTask };
-      await vscode.commands.executeCommand("commandtree.runInCurrentTerminal", commandTreeItem);
-      await sleep(1500);
+      const rendererLog = watchRendererLog();
+
+      const shellExecEvents: string[] = [];
+      const shellExecListener = vscode.window.onDidStartTerminalShellExecution((e) => {
+        shellExecEvents.push(e.execution.commandLine.value);
+      });
+      const terminalStates: string[] = [];
+      const stateListener = vscode.window.onDidChangeTerminalState((t) => {
+        terminalStates.push(`${t.name}:interacted=${String(t.state.isInteractedWith)}`);
+      });
+
+      try {
+        await vscode.commands.executeCommand("commandtree.runInCurrentTerminal", commandTreeItem);
+        await sleep(5000);
+      } finally {
+        shellExecListener.dispose();
+        stateListener.dispose();
+      }
 
       const finalCount = vscode.window.terminals.length;
       assert.ok(finalCount >= 1, "Should create a terminal when none exists");
+      assert.strictEqual(finalCount, 1, "Should create exactly one terminal when none existed");
       assert.ok(vscode.window.activeTerminal !== undefined, "Created terminal should be active");
+      assert.ok(
+        vscode.window.activeTerminal?.name.startsWith("CommandTree:"),
+        `Active terminal should be the CommandTree one, got: ${vscode.window.activeTerminal?.name ?? "(none)"}`
+      );
+      assert.ok(
+        vscode.window.activeTerminal?.name.includes("Create Terminal Test"),
+        `Active terminal name should include task label, got: ${vscode.window.activeTerminal?.name ?? "(none)"}`
+      );
+      assert.strictEqual(vscode.window.activeTerminal?.exitStatus, undefined, "Terminal should still be running");
+
+      const rendererErrors = rendererLog.capture();
+      assert.deepStrictEqual(
+        rendererErrors,
+        [],
+        `VS Code renderer.log must not contain xterm 'dimensions' or TypeError lines from this command. Got ${rendererErrors.length} line(s):\n${rendererErrors.join("\n")}`
+      );
+
+      assert.ok(
+        fs.existsSync(markerFile),
+        `Marker file should exist at ${markerFile} — proves the shell command actually executed. If sendText threw the xterm 'dimensions' TypeError, this file is never written.`
+      );
+      const markerContents = fs.readFileSync(markerFile, "utf8").trim();
+      assert.strictEqual(markerContents, "created", "Marker file should contain the echoed text 'created'");
+      const markerStat = fs.statSync(markerFile);
+      assert.ok(markerStat.size > 0, "Marker file should be non-empty (shell command produced output)");
+      fs.unlinkSync(markerFile);
     });
 
     test("runInCurrentTerminal reuses existing active terminal", async function () {
-      this.timeout(15000);
+      this.timeout(20000);
 
       const existingTerminal = vscode.window.createTerminal("Existing Test Terminal");
       existingTerminal.show();
@@ -658,20 +757,64 @@ suite("Command Execution E2E Tests", () => {
 
       const terminalCountBefore = vscode.window.terminals.length;
 
+      const markerFile = path.join(os.tmpdir(), `commandtree-test-reuse-${Date.now()}-${Math.random()}.marker`);
+      if (fs.existsSync(markerFile)) {
+        fs.unlinkSync(markerFile);
+      }
+
       const shellTask = createMockTaskItem({
         type: "shell",
         label: "Reuse Terminal Test",
-        command: 'echo "reusing terminal"',
+        command: `echo reused > "${markerFile}"`,
         cwd: context.workspaceRoot,
         filePath: path.join(context.workspaceRoot, "scripts/test.sh"),
       });
 
       const commandTreeItem = { data: shellTask };
-      await vscode.commands.executeCommand("commandtree.runInCurrentTerminal", commandTreeItem);
-      await sleep(1000);
+      const rendererLog = watchRendererLog();
+
+      const shellExecEvents: string[] = [];
+      const shellExecListener = vscode.window.onDidStartTerminalShellExecution((e) => {
+        shellExecEvents.push(e.execution.commandLine.value);
+      });
+
+      try {
+        await vscode.commands.executeCommand("commandtree.runInCurrentTerminal", commandTreeItem);
+        await sleep(5000);
+      } finally {
+        shellExecListener.dispose();
+      }
 
       const terminalCountAfter = vscode.window.terminals.length;
       assert.strictEqual(terminalCountAfter, terminalCountBefore, "Should reuse existing terminal, not create new one");
+      assert.ok(
+        vscode.window.activeTerminal !== undefined,
+        "An active terminal should exist after reuse"
+      );
+      assert.strictEqual(
+        vscode.window.activeTerminal?.name,
+        "Existing Test Terminal",
+        "Reused terminal must be the pre-existing one (its name is preserved — no new CommandTree terminal created)"
+      );
+
+      const rendererErrors = rendererLog.capture();
+      assert.deepStrictEqual(
+        rendererErrors,
+        [],
+        `VS Code renderer.log must not contain xterm 'dimensions' or TypeError lines during terminal reuse. Got ${rendererErrors.length} line(s):\n${rendererErrors.join("\n")}`
+      );
+
+      assert.ok(
+        fs.existsSync(markerFile),
+        `Marker file should exist at ${markerFile} — proves the shell command actually executed in the reused terminal. If sendText threw the xterm 'dimensions' TypeError, this file is never written.`
+      );
+      const markerContents = fs.readFileSync(markerFile, "utf8").trim();
+      assert.strictEqual(markerContents, "reused", "Marker file should contain the echoed text 'reused'");
+      const markerStat = fs.statSync(markerFile);
+      assert.ok(markerStat.size > 0, "Marker file should be non-empty (shell command produced output)");
+      fs.unlinkSync(markerFile);
+
+      existingTerminal.dispose();
     });
 
     test("new terminal has CommandTree prefix in name", async function () {
@@ -695,7 +838,7 @@ suite("Command Execution E2E Tests", () => {
       await vscode.commands.executeCommand("commandtree.run", commandTreeItem);
       await sleep(3000);
 
-      const terminals = vscode.window.terminals;
+      const {terminals} = vscode.window;
       const commandTreeTerminal = terminals.find((t) => t.name.includes("CommandTree"));
       assert.ok(
         commandTreeTerminal !== undefined,

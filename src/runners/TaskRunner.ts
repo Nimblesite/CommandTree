@@ -225,7 +225,7 @@ export class TaskRunner {
    * Builds the full command string with formatted parameters.
    */
   private buildCommand(task: CommandItem, params: Array<{ def: ParamDef; value: string }>): string {
-    let command = task.command;
+    let {command} = task;
     const parts: string[] = [];
 
     for (const { def, value } of params) {

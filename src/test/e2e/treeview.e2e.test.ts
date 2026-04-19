@@ -257,7 +257,7 @@ suite("TreeView E2E Tests", () => {
     const privateLabels = ["_beta_private", "_omega_private"];
 
     function getThemeColorId(item: CommandTreeItem): string | undefined {
-      const iconPath = item.iconPath;
+      const {iconPath} = item;
       return iconPath instanceof vscode.ThemeIcon ? iconPath.color?.id : undefined;
     }
 

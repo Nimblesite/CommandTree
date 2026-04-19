@@ -105,8 +105,7 @@ suite("Configuration and File Watchers E2E Tests", () => {
       this.timeout(10000);
 
       const packageJson = readExtensionPackageJson();
-      const enumDescriptions =
-        packageJson.contributes.configuration.properties["commandtree.sortOrder"].enumDescriptions;
+      const {enumDescriptions} = packageJson.contributes.configuration.properties["commandtree.sortOrder"];
 
       assert.ok(enumDescriptions, "enumDescriptions should exist");
       assert.ok(enumDescriptions.length === 3, "Should have 3 descriptions");
