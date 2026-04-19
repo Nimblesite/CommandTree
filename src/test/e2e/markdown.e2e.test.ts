@@ -80,7 +80,7 @@ suite("Markdown Discovery and Preview E2E Tests", () => {
       assert.ok(readmeItem, "Should find README.md item");
 
       assert.ok(isCommandItem(readmeItem.data), "README.md must be a command node");
-      const {description} = readmeItem.data;
+      const { description } = readmeItem.data;
       assert.ok(description !== undefined && description.length > 0, "Should have a description");
       assert.ok(description.includes("Test Project Documentation"), "Description should come from first heading");
     });
@@ -103,7 +103,7 @@ suite("Markdown Discovery and Preview E2E Tests", () => {
       assert.ok(readmeItem, "Should find README.md item");
 
       assert.ok(isCommandItem(readmeItem.data), "README.md must be a command node");
-      const {filePath} = readmeItem.data;
+      const { filePath } = readmeItem.data;
       assert.ok(filePath.length > 0, "Should have a file path");
       assert.ok(filePath.endsWith("README.md"), "File path should end with README.md");
     });
@@ -192,7 +192,7 @@ suite("Markdown Discovery and Preview E2E Tests", () => {
 
       assert.ok(readmeItem, "Should find README.md item");
 
-      const {contextValue} = readmeItem;
+      const { contextValue } = readmeItem;
       assert.ok(contextValue?.includes("markdown") === true, "Context value should include 'markdown'");
     });
 

@@ -24,7 +24,7 @@ export async function activateExtension(): Promise<TestContext> {
     await extension.activate();
   }
 
-  const {workspaceFolders} = vscode.workspace;
+  const { workspaceFolders } = vscode.workspace;
   if (!workspaceFolders || workspaceFolders.length === 0) {
     throw new Error("No workspace folder open");
   }
@@ -66,7 +66,7 @@ export async function sleep(ms: number): Promise<void> {
 }
 
 export function getFixturePath(relativePath: string): string {
-  const {workspaceFolders} = vscode.workspace;
+  const { workspaceFolders } = vscode.workspace;
   if (!workspaceFolders || workspaceFolders.length === 0) {
     throw new Error("No workspace folder open");
   }

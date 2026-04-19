@@ -335,7 +335,7 @@ suite("Commands and UI E2E Tests", () => {
 
       const packageJson = readPackageJson();
 
-      const {commands} = packageJson.contributes;
+      const { commands } = packageJson.contributes;
 
       const refreshCmd = commands.find((c) => c.command === "commandtree.refresh");
       assert.ok(refreshCmd?.icon === "$(refresh)", "Refresh should have refresh icon");

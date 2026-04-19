@@ -30,14 +30,18 @@ function findCurrentRendererLog(): string | undefined {
     path.resolve(process.cwd(), "../../.vscode-test/user-data/logs"),
   ];
   for (const root of searchRoots) {
-    if (!fs.existsSync(root)) {continue;}
+    if (!fs.existsSync(root)) {
+      continue;
+    }
     const sessions = fs
       .readdirSync(root)
       .filter((n) => /^\d{8}T\d{6}$/.test(n))
       .sort();
     for (let i = sessions.length - 1; i >= 0; i--) {
       const logPath = path.join(root, sessions[i] ?? "", "window1", "renderer.log");
-      if (fs.existsSync(logPath)) {return logPath;}
+      if (fs.existsSync(logPath)) {
+        return logPath;
+      }
     }
   }
   return undefined;
@@ -49,13 +53,17 @@ function watchRendererLog(): RendererLogWatcher {
   return {
     capture: (): string[] => {
       if (logPath === undefined || !fs.existsSync(logPath)) {
-        throw new Error(`Renderer log not found — cannot verify absence of xterm errors. Searched under .vscode-test/user-data/logs`);
+        throw new Error(
+          `Renderer log not found — cannot verify absence of xterm errors. Searched under .vscode-test/user-data/logs`
+        );
       }
       const fd = fs.openSync(logPath, "r");
       try {
         const currentSize = fs.statSync(logPath).size;
         const length = Math.max(0, currentSize - baselineSize);
-        if (length === 0) {return [];}
+        if (length === 0) {
+          return [];
+        }
         const buf = Buffer.alloc(length);
         fs.readSync(fd, buf, 0, length, baselineSize);
         const text = buf.toString("utf8");
@@ -190,7 +198,7 @@ suite("Command Execution E2E Tests", () => {
       this.timeout(10000);
 
       const packageJson = JSON.parse(fs.readFileSync(getFixturePath("package.json"), "utf8")) as PackageJson;
-      const {scripts} = packageJson;
+      const { scripts } = packageJson;
 
       assert.ok(scripts !== undefined, "Should have scripts object");
       assert.ok(scripts["build"] !== undefined, "Should have build script");
@@ -787,10 +795,7 @@ suite("Command Execution E2E Tests", () => {
 
       const terminalCountAfter = vscode.window.terminals.length;
       assert.strictEqual(terminalCountAfter, terminalCountBefore, "Should reuse existing terminal, not create new one");
-      assert.ok(
-        vscode.window.activeTerminal !== undefined,
-        "An active terminal should exist after reuse"
-      );
+      assert.ok(vscode.window.activeTerminal !== undefined, "An active terminal should exist after reuse");
       assert.strictEqual(
         vscode.window.activeTerminal.name,
         "Existing Test Terminal",
@@ -838,7 +843,7 @@ suite("Command Execution E2E Tests", () => {
       await vscode.commands.executeCommand("commandtree.run", commandTreeItem);
       await sleep(3000);
 
-      const {terminals} = vscode.window;
+      const { terminals } = vscode.window;
       const commandTreeTerminal = terminals.find((t) => t.name.includes("CommandTree"));
       assert.ok(
         commandTreeTerminal !== undefined,

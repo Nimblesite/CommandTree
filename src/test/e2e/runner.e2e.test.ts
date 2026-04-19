@@ -658,11 +658,11 @@ suite("Command Runner E2E Tests", () => {
       });
 
       assert.ok(task.params !== undefined, "Should have params");
-      const {params} = task;
+      const { params } = task;
       const param = params[0];
       assert.ok(param !== undefined, "Should have param");
       assert.ok(param.options !== undefined, "Param should have options");
-      const {options} = param;
+      const { options } = param;
       assert.strictEqual(options.length, 3, "Should have 3 options");
     });
 
@@ -963,7 +963,7 @@ suite("Command Runner E2E Tests", () => {
       await sleep(4000);
 
       assert.ok(vscode.window.terminals.length > 0, "Terminal should exist after running command");
-      const {activeTerminal} = vscode.window;
+      const { activeTerminal } = vscode.window;
       assert.ok(activeTerminal !== undefined, "Should have active terminal");
       assert.strictEqual(
         activeTerminal.exitStatus,
