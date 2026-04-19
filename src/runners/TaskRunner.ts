@@ -22,11 +22,16 @@ function showError(message: string): void {
  */
 export type RunMode = "newTerminal" | "currentTerminal";
 
-// Short opportunistic wait for shell integration to activate. If it does
-// not activate in time we send via `sendText` once the shell process has
-// spawned — `processId` resolving guarantees xterm has been laid out and
-// has `dimensions` (command-execution spec).
-const SHELL_INTEGRATION_TIMEOUT_MS = 500;
+// Upper bound on waiting for shell integration to activate. Both SI
+// `executeCommand` and `sendText` internally call xterm `scrollToBottom`,
+// so the paint delay below applies to both paths (command-execution spec).
+const SHELL_INTEGRATION_TIMEOUT_MS = 2000;
+// Delay after shell spawn before touching the terminal. xterm lays out on
+// DOM paint after `terminal.show()`; on a busy CI host with xvfb this can
+// take over a second, so we wait long enough that the viewport and its
+// `dimensions` are populated before any send — otherwise xterm's
+// `scrollToBottom` throws a TypeError (command-execution spec).
+const XTERM_PAINT_DELAY_MS = 1500;
 
 /**
  * Executes commands based on their type.
@@ -146,7 +151,7 @@ export class TaskRunner {
       terminalOptions.cwd = task.cwd;
     }
     const terminal = vscode.window.createTerminal(terminalOptions);
-    terminal.show();
+    terminal.show(true);
     this.executeInTerminal(terminal, command);
   }
 
@@ -167,7 +172,7 @@ export class TaskRunner {
       terminal = vscode.window.createTerminal(terminalOptions);
     }
 
-    terminal.show();
+    terminal.show(true);
 
     const fullCommand = task.cwd !== undefined && task.cwd !== "" ? `cd "${task.cwd}" && ${command}` : command;
 
@@ -175,45 +180,44 @@ export class TaskRunner {
   }
 
   /**
-   * Executes a command in a terminal using shell integration when available.
-   * Waits for shell integration to activate on new terminals, falling back
-   * to sendText if it doesn't become available within the timeout.
-   */
-  private executeInTerminal(terminal: vscode.Terminal, command: string): void {
-    if (terminal.shellIntegration !== undefined) {
-      terminal.shellIntegration.executeCommand(command);
-      return;
-    }
-    this.waitForShellIntegration(terminal, command);
-  }
-
-  private waitForShellIntegration(terminal: vscode.Terminal, command: string): void {
-    let resolved = false;
-    const listener = vscode.window.onDidChangeTerminalShellIntegration(({ terminal: t, shellIntegration }) => {
-      if (t === terminal && !resolved) {
-        resolved = true;
-        listener.dispose();
-        this.safeSendText(terminal, command, shellIntegration);
-      }
-    });
-    setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        listener.dispose();
-        this.sendTextAfterShellReady(terminal, command).catch(() => undefined);
-      }
-    }, SHELL_INTEGRATION_TIMEOUT_MS);
-  }
-
-  /**
-   * Sends text after the shell process has spawned. Awaiting `processId`
-   * ensures xterm has been laid out and has `dimensions` — without this,
-   * `sendText` can trigger an asynchronous TypeError inside xterm.js
+   * Executes a command in a terminal. Always defers the send until the
+   * shell process has spawned and the xterm viewport has had time to
+   * paint — both shell integration's `executeCommand` and `sendText`
+   * internally call xterm `scrollToBottom`, which throws a TypeError if
+   * the viewport's `dimensions` are not yet populated
    * (command-execution spec).
    */
-  private async sendTextAfterShellReady(terminal: vscode.Terminal, command: string): Promise<void> {
+  private executeInTerminal(terminal: vscode.Terminal, command: string): void {
+    this.executeWhenReady(terminal, command).catch(() => undefined);
+  }
+
+  private async executeWhenReady(terminal: vscode.Terminal, command: string): Promise<void> {
     await terminal.processId;
-    this.safeSendText(terminal, command);
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, XTERM_PAINT_DELAY_MS);
+    });
+    const si = terminal.shellIntegration ?? (await this.awaitShellIntegration(terminal));
+    this.safeSendText(terminal, command, si);
+  }
+
+  private async awaitShellIntegration(terminal: vscode.Terminal): Promise<vscode.TerminalShellIntegration | undefined> {
+    return await new Promise<vscode.TerminalShellIntegration | undefined>((resolve) => {
+      let done = false;
+      const listener = vscode.window.onDidChangeTerminalShellIntegration(({ terminal: t, shellIntegration }) => {
+        if (t === terminal && !done) {
+          done = true;
+          listener.dispose();
+          resolve(shellIntegration);
+        }
+      });
+      setTimeout(() => {
+        if (!done) {
+          done = true;
+          listener.dispose();
+          resolve(undefined);
+        }
+      }, SHELL_INTEGRATION_TIMEOUT_MS);
+    });
   }
 
   /**

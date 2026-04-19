@@ -27,7 +27,6 @@ export default defineConfig({
             slow: 10000
         },
         launchArgs: [
-            '--disable-gpu',
             '--user-data-dir', userDataDir
         ]
     }],
