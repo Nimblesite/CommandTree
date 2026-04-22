@@ -1,8 +1,11 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import * as fs from "fs/promises";
 import { CommandTreeProvider } from "./CommandTreeProvider";
 import { CommandTreeItem, isCommandItem } from "./models/TaskItem";
 import type { CommandItem } from "./models/TaskItem";
+import type { Result } from "./models/Result";
+import { err, ok } from "./models/Result";
 import { TaskRunner } from "./runners/TaskRunner";
 import { QuickTasksProvider } from "./QuickTasksProvider";
 import { logger } from "./utils/logger";
@@ -13,6 +16,10 @@ import { forceSelectModel } from "./semantic/summariser";
 import { syncTagsFromConfig } from "./tags/tagSync";
 import { setupFileWatchers } from "./watchers";
 import { PrivateTaskDecorationProvider } from "./tree/PrivateTaskDecorationProvider";
+
+const MAKE_EXECUTABLE_COMMAND = "commandtree.makeExecutable";
+const EXECUTE_PERMISSION_BITS = 0o111;
+const WINDOWS_PLATFORM = "win32";
 
 let treeProvider: CommandTreeProvider;
 let quickTasksProvider: QuickTasksProvider;
@@ -96,6 +103,7 @@ function registerTreeViews(context: vscode.ExtensionContext): void {
 function registerCommands(context: vscode.ExtensionContext): void {
   registerCoreCommands(context);
   registerClipboardCommands(context);
+  registerFileCommands(context);
   registerFilterCommands(context);
   registerTagCommands(context);
   registerQuickCommands(context);
@@ -131,6 +139,10 @@ function registerClipboardCommands(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("commandtree.copyRelativePath", handleCopyRelativePath),
     vscode.commands.registerCommand("commandtree.copyFullPath", handleCopyFullPath)
   );
+}
+
+function registerFileCommands(context: vscode.ExtensionContext): void {
+  context.subscriptions.push(vscode.commands.registerCommand(MAKE_EXECUTABLE_COMMAND, handleMakeExecutable));
 }
 
 function registerFilterCommands(context: vscode.ExtensionContext): void {
@@ -242,6 +254,30 @@ async function handleCopyFullPath(item: CommandTreeItem | CommandItem | undefine
     return;
   }
   await vscode.env.clipboard.writeText(task.filePath);
+}
+
+async function handleMakeExecutable(item: CommandTreeItem | CommandItem | undefined): Promise<void> {
+  const task = extractTask(item);
+  if (task === undefined || process.platform === WINDOWS_PLATFORM) {
+    return;
+  }
+  const result = await makeFileExecutable(task.filePath);
+  if (!result.ok) {
+    logger.error("Make executable failed", { error: result.error });
+    vscode.window.showErrorMessage(`CommandTree: ${result.error}`);
+    return;
+  }
+  vscode.window.showInformationMessage(`CommandTree: Made ${path.basename(task.filePath)} executable`);
+}
+
+async function makeFileExecutable(filePath: string): Promise<Result<void, string>> {
+  try {
+    const stat = await fs.stat(filePath);
+    await fs.chmod(filePath, stat.mode | EXECUTE_PERMISSION_BITS);
+    return ok(undefined);
+  } catch (e: unknown) {
+    return err(e instanceof Error ? e.message : "Unable to change file permissions");
+  }
 }
 
 async function handleAddTag(item: CommandTreeItem | CommandItem | undefined, tagNameArg?: string): Promise<void> {
