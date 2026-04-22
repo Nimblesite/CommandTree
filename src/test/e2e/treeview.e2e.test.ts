@@ -308,6 +308,7 @@ suite("TreeView E2E Tests", () => {
         miseRelativePath,
         [
           "[tasks.alpha_public]",
+          'description = "Public alpha task"',
           'run = "echo alpha"',
           "",
           "[tasks.zeta_public]",
