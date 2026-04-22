@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { isPhonyTask, isPrivateTask } from "./models/TaskItem";
+import { isPrivateTask } from "./models/TaskItem";
 import type { CommandItem, CategoryDef } from "./models/TaskItem";
 import type { CommandTreeItem } from "./models/TaskItem";
 import type { DiscoveryResult } from "./discovery";
@@ -203,41 +203,25 @@ export class CommandTreeProvider implements vscode.TreeDataProvider<CommandTreeI
     return Number(isPrivateTask(a)) - Number(isPrivateTask(b));
   }
 
-  private compareHelpTasks(a: CommandItem, b: CommandItem): number {
-    const isHelpA = a.type === "make" && a.label === "help";
-    const isHelpB = b.type === "make" && b.label === "help";
-    return Number(isHelpB) - Number(isHelpA);
-  }
-
-  private comparePhonyTasks(a: CommandItem, b: CommandItem): number {
-    return Number(isPhonyTask(b)) - Number(isPhonyTask(a));
-  }
-
-  private compareMakeTaskPriority(a: CommandItem, b: CommandItem): number {
-    if (a.type !== "make" || b.type !== "make") {
-      return 0;
-    }
-    return this.compareHelpTasks(a, b) || this.comparePhonyTasks(a, b);
+  private compareLabels(a: CommandItem, b: CommandItem): number {
+    return a.label.localeCompare(b.label, undefined, { sensitivity: "base" });
   }
 
   private getComparator(): (a: CommandItem, b: CommandItem) => number {
     const order = this.getSortOrder();
     if (order === "folder") {
       return (a, b) =>
-        a.category.localeCompare(b.category) ||
+        a.category.localeCompare(b.category, undefined, { sensitivity: "base" }) ||
         this.comparePrivateTasks(a, b) ||
-        this.compareMakeTaskPriority(a, b) ||
-        a.label.localeCompare(b.label);
+        this.compareLabels(a, b);
     }
     if (order === "type") {
       return (a, b) =>
-        a.type.localeCompare(b.type) ||
+        a.type.localeCompare(b.type, undefined, { sensitivity: "base" }) ||
         this.comparePrivateTasks(a, b) ||
-        this.compareMakeTaskPriority(a, b) ||
-        a.label.localeCompare(b.label);
+        this.compareLabels(a, b);
     }
-    return (a, b) =>
-      this.comparePrivateTasks(a, b) || this.compareMakeTaskPriority(a, b) || a.label.localeCompare(b.label);
+    return (a, b) => this.comparePrivateTasks(a, b) || this.compareLabels(a, b);
   }
 
   private applyTagFilter(tasks: CommandItem[]): CommandItem[] {
