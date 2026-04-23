@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs/promises";
 import { CommandTreeProvider } from "./CommandTreeProvider";
-import { CommandTreeItem, isCommandItem } from "./models/TaskItem";
-import type { CommandItem } from "./models/TaskItem";
+import { isCommandItem } from "./models/TaskItem";
+import type { CommandTreeItem, CommandItem } from "./models/TaskItem";
 import type { Result } from "./models/Result";
 import { err, ok } from "./models/Result";
 import { TaskRunner } from "./runners/TaskRunner";
@@ -33,7 +33,7 @@ export interface ExtensionExports {
 export async function activate(context: vscode.ExtensionContext): Promise<ExtensionExports | undefined> {
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   logger.info("Extension activating", { workspaceRoot });
-  if (workspaceRoot === undefined || workspaceRoot === "") {
+  if (workspaceRoot === undefined) {
     logger.warn("No workspace root found, extension not activating");
     return undefined;
   }

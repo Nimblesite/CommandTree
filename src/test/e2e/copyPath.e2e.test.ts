@@ -106,10 +106,7 @@ suite("Copy Path E2E Tests", () => {
 
     await vscode.env.clipboard.writeText(SENTINEL_CLIPBOARD);
     await vscode.commands.executeCommand(COPY_FULL_COMMAND, undefined);
-    await assertClipboardValue(
-      SENTINEL_CLIPBOARD,
-      "Copy Full Path must be a no-op when invoked with no tree item"
-    );
+    await assertClipboardValue(SENTINEL_CLIPBOARD, "Copy Full Path must be a no-op when invoked with no tree item");
 
     await vscode.env.clipboard.writeText(SENTINEL_CLIPBOARD);
     await vscode.commands.executeCommand(COPY_FULL_COMMAND, { data: { nodeType: "category", commandType: "make" } });

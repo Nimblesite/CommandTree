@@ -241,5 +241,4 @@ export class TaskRunner {
       showError(`Failed to send command to terminal: ${command}`);
     }
   }
-
 }

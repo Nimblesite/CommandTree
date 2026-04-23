@@ -75,11 +75,7 @@ interface CommandPatch {
 
 function patchRegisterCommandToTolerateDuplicates(): CommandPatch {
   const original = vscode.commands.registerCommand;
-  const tolerant = (
-    id: string,
-    fn: (...args: readonly unknown[]) => unknown,
-    thisArg?: unknown
-  ): vscode.Disposable => {
+  const tolerant = (id: string, fn: (...args: readonly unknown[]) => unknown, thisArg?: unknown): vscode.Disposable => {
     try {
       return original.call(vscode.commands, id, fn, thisArg);
     } catch {
@@ -148,10 +144,7 @@ suite("Extension Activation Non-Blocking E2E Test", () => {
           `the test held discovery for ${WATCHDOG_MS}ms and activate did not resolve. ` +
           `The current code awaits initialDiscovery(), which is exactly the bug this test enforces.`
       );
-      assert.ok(
-        hang.wasCalled(),
-        "Initial discovery must be kicked off in the background during activate()"
-      );
+      assert.ok(hang.wasCalled(), "Initial discovery must be kicked off in the background during activate()");
     } finally {
       hang.release();
       hang.restore();

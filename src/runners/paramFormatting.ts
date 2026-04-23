@@ -7,16 +7,17 @@ export interface ParamValue {
 
 export function formatParam(def: ParamDef, value: string): string {
   const format = def.format ?? "positional";
-  switch (format) {
-    case "positional":
-      return `"${value}"`;
-    case "flag":
-      return `${def.flag ?? `--${def.name}`} "${value}"`;
-    case "flag-equals":
-      return `${def.flag ?? `--${def.name}`}=${value}`;
-    case "dashdash-args":
-      return `-- ${value}`;
+  const flag = def.flag ?? `--${def.name}`;
+  if (format === "flag") {
+    return `${flag} "${value}"`;
   }
+  if (format === "flag-equals") {
+    return `${flag}=${value}`;
+  }
+  if (format === "dashdash-args") {
+    return `-- ${value}`;
+  }
+  return `"${value}"`;
 }
 
 export function buildCommand(baseCommand: string, params: readonly ParamValue[]): string {

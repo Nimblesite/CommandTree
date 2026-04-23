@@ -10,15 +10,12 @@ import type { DbHandle } from "./db";
 import { openDatabase, initSchema, closeDatabase } from "./db";
 import type { Result } from "../models/Result";
 import { ok, err } from "../models/Result";
+import { isLockError, removeLockFiles as removeLockFilesPure } from "./lockArtifacts";
 
 const COMMANDTREE_DIR = ".commandtree";
 const DB_FILENAME = "commandtree.sqlite3";
 const LOCK_RETRY_INTERVAL_MS = 1000;
 const LOCK_RETRY_MAX_MS = 10000;
-const JOURNAL_SUFFIX = "-journal";
-const WAL_SUFFIX = "-wal";
-const SHM_SUFFIX = "-shm";
-const LOCK_DIR_SUFFIX = ".lock";
 
 let dbHandle: DbHandle | null = null;
 
@@ -118,10 +115,6 @@ function tryOpenAndInit(dbPath: string): Result<DbHandle, string> {
   return ok(openResult.value);
 }
 
-function isLockError(message: string): boolean {
-  return message.includes("locked") || message.includes("SQLITE_BUSY");
-}
-
 async function retryWithBackoff(dbPath: string): Promise<Result<DbHandle, string>> {
   let elapsed = 0;
   let lastError = "database is locked";
@@ -143,37 +136,14 @@ async function retryWithBackoff(dbPath: string): Promise<Result<DbHandle, string
 
 /**
  * SPEC: DB-LOCK-RECOVERY
- * Forcefully removes SQLite lock artifacts:
- * - .lock directory
- * - -journal file
- * - -wal file
- * - -shm file
+ * Forcefully removes SQLite lock artifacts. Logging wrapper around the pure helper.
  */
 export function removeLockFiles(dbPath: string): void {
-  const targets = [
-    { path: dbPath + LOCK_DIR_SUFFIX, isDir: true },
-    { path: dbPath + JOURNAL_SUFFIX, isDir: false },
-    { path: dbPath + WAL_SUFFIX, isDir: false },
-    { path: dbPath + SHM_SUFFIX, isDir: false },
-  ];
-  for (const target of targets) {
-    if (!fs.existsSync(target.path)) {
-      continue;
-    }
-    try {
-      if (target.isDir) {
-        fs.rmSync(target.path, { recursive: true });
-      } else {
-        fs.unlinkSync(target.path);
-      }
-      logger.info("Removed lock artifact", { path: target.path });
-    } catch (e: unknown) {
-      logger.error("Failed to remove lock artifact", {
-        path: target.path,
-        error: e instanceof Error ? e.message : String(e),
-      });
-    }
-  }
+  removeLockFilesPure(dbPath, {
+    onRemoved: (artifactPath) => logger.info("Removed lock artifact", { path: artifactPath }),
+    onError: (artifactPath, message) =>
+      logger.error("Failed to remove lock artifact", { path: artifactPath, error: message }),
+  });
 }
 
 async function sleep(ms: number): Promise<void> {
