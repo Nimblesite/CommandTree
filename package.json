@@ -394,7 +394,7 @@
     "format:check": "prettier --check \"src/**/*.ts\"",
     "pretest": "npm run compile",
     "test": "npm run test:unit && npm run test:e2e",
-    "test:unit": "mocha out/test/unit/**/*.test.js",
+    "test:unit": "mocha --bail out/test/unit/**/*.test.js",
     "test:e2e": "vscode-test",
     "test:coverage": "vscode-test --coverage",
     "coverage:check": "node tools/check-coverage.mjs",

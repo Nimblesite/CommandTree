@@ -10,13 +10,18 @@ import { TaskRunner } from "./runners/TaskRunner";
 import { QuickTasksProvider } from "./QuickTasksProvider";
 import { logger } from "./utils/logger";
 import { initDb, disposeDb } from "./db/lifecycle";
-import { summariseAllTasks, registerAllCommands } from "./semantic/summaryPipeline";
-import { createVSCodeFileSystem } from "./semantic/vscodeAdapters";
 import { forceSelectModel } from "./semantic/summariser";
 import { syncTagsFromConfig } from "./tags/tagSync";
 import { setupFileWatchers } from "./watchers";
 import { PrivateTaskDecorationProvider } from "./tree/PrivateTaskDecorationProvider";
 import { appState } from "./state";
+import {
+  initAiSummaries,
+  registerDiscoveredCommands,
+  runSummarisation,
+  syncAndSummarise,
+} from "./summaryOrchestration";
+import type { SummaryDeps } from "./summaryOrchestration";
 
 const MAKE_EXECUTABLE_COMMAND = "commandtree.makeExecutable";
 const EXECUTE_PERMISSION_BITS = 0o111;
@@ -48,6 +53,14 @@ function getTaskRunner(): TaskRunner {
   return appState.taskRunner;
 }
 
+function getSummaryDeps(workspaceRoot: string): SummaryDeps {
+  return {
+    workspaceRoot,
+    treeProvider: getTreeProvider(),
+    quickTasksProvider: getQuickTasksProvider(),
+  };
+}
+
 export async function activate(context: vscode.ExtensionContext): Promise<ExtensionExports | undefined> {
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   logger.info("Extension activating", { workspaceRoot });
@@ -76,7 +89,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Extens
 function runBackgroundStartup(workspaceRoot: string): void {
   initialDiscovery(workspaceRoot)
     .then(() => {
-      initAiSummaries(workspaceRoot);
+      initAiSummaries(getSummaryDeps(workspaceRoot));
     })
     .catch((e: unknown) => {
       logger.error("Initial discovery failed", {
@@ -96,7 +109,7 @@ function setupWatchers(context: vscode.ExtensionContext, workspaceRoot: string):
   setupFileWatchers({
     context,
     onTaskFileChange: () => {
-      syncAndSummarise(workspaceRoot).catch((e: unknown) => {
+      syncAndSummarise(getSummaryDeps(workspaceRoot)).catch((e: unknown) => {
         logger.error("Sync failed", {
           error: e instanceof Error ? e.message : "Unknown",
         });
@@ -115,7 +128,7 @@ function setupWatchers(context: vscode.ExtensionContext, workspaceRoot: string):
 async function initialDiscovery(workspaceRoot: string): Promise<void> {
   await syncQuickTasks();
   logger.info("syncQuickTasks complete", { taskCount: getTreeProvider().getAllTasks().length });
-  await registerDiscoveredCommands(workspaceRoot);
+  await registerDiscoveredCommands(getSummaryDeps(workspaceRoot));
   await syncTagsFromJson(workspaceRoot);
 }
 
@@ -192,7 +205,7 @@ function registerFilterCommands(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("commandtree.generateSummaries", async () => {
       const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
       if (workspaceRoot !== undefined) {
-        await runSummarisation(workspaceRoot);
+        await runSummarisation(getSummaryDeps(workspaceRoot));
       }
     }),
     vscode.commands.registerCommand("commandtree.selectModel", async () => {
@@ -201,7 +214,7 @@ function registerFilterCommands(context: vscode.ExtensionContext): void {
         vscode.window.showInformationMessage(`CommandTree: AI model set to ${result.value}`);
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (workspaceRoot !== undefined) {
-          await runSummarisation(workspaceRoot);
+          await runSummarisation(getSummaryDeps(workspaceRoot));
         }
       } else {
         vscode.window.showWarningMessage(`CommandTree: ${result.error}`);
@@ -393,72 +406,6 @@ async function pickOrCreateTag(existingTags: string[], taskLabel: string): Promi
     });
     qp.show();
   });
-}
-
-async function registerDiscoveredCommands(workspaceRoot: string): Promise<void> {
-  const tasks = getTreeProvider().getAllTasks();
-  if (tasks.length === 0) {
-    return;
-  }
-  const result = await registerAllCommands({
-    tasks,
-    workspaceRoot,
-    fs: createVSCodeFileSystem(),
-  });
-  if (!result.ok) {
-    logger.warn("Command registration failed", { error: result.error });
-  } else {
-    logger.info("Commands registered in DB", { count: result.value });
-  }
-}
-
-function initAiSummaries(workspaceRoot: string): void {
-  const aiConfig = vscode.workspace.getConfiguration("commandtree").get<boolean>("enableAiSummaries");
-  if (aiConfig === false) {
-    return;
-  }
-  vscode.commands.executeCommand("setContext", "commandtree.aiSummariesEnabled", true);
-  runSummarisation(workspaceRoot).catch((e: unknown) => {
-    logger.error("AI summarisation failed", {
-      error: e instanceof Error ? e.message : "Unknown",
-    });
-  });
-}
-
-async function runSummarisation(workspaceRoot: string): Promise<void> {
-  const tasks = getTreeProvider().getAllTasks();
-  logger.info("[SUMMARY] Starting", { taskCount: tasks.length });
-  if (tasks.length === 0) {
-    logger.warn("[SUMMARY] No tasks to summarise");
-    return;
-  }
-  const summaryResult = await summariseAllTasks({
-    tasks,
-    workspaceRoot,
-    fs: createVSCodeFileSystem(),
-    onProgress: (done, total, label) => {
-      logger.info(`[SUMMARY] ${label}`, { done, total });
-    },
-  });
-  if (!summaryResult.ok) {
-    logger.error("Summary pipeline failed", { error: summaryResult.error });
-    vscode.window.showErrorMessage(`CommandTree: Summary failed — ${summaryResult.error}`);
-    return;
-  }
-  if (summaryResult.value > 0) {
-    await getTreeProvider().refresh();
-    getQuickTasksProvider().updateTasks(getTreeProvider().getAllTasks());
-  }
-  vscode.window.showInformationMessage(`CommandTree: Summarised ${summaryResult.value} commands`);
-}
-
-async function syncAndSummarise(workspaceRoot: string): Promise<void> {
-  await syncQuickTasks();
-  await registerDiscoveredCommands(workspaceRoot);
-  const aiConfig = vscode.workspace.getConfiguration("commandtree").get<boolean>("enableAiSummaries");
-  if (aiConfig !== false) {
-    await runSummarisation(workspaceRoot);
-  }
 }
 
 function updateFilterContext(): void {

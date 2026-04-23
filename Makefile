@@ -34,13 +34,10 @@ endif
 COVERAGE_THRESHOLDS_FILE := coverage-thresholds.json
 
 UNAME := $(shell uname 2>/dev/null)
-VSCODE_TEST_CMD = npx vscode-test --coverage
-VSCODE_TEST_EXCLUDE_CMD = npx vscode-test --coverage --grep @exclude-ci --invert
+VSCODE_TEST_EXCLUDE_CMD = npx vscode-test --coverage --bail --grep @exclude-ci --invert
 ifeq ($(UNAME),Linux)
-VSCODE_TEST = xvfb-run -a $(VSCODE_TEST_CMD)
 VSCODE_TEST_EXCLUDE = xvfb-run -a $(VSCODE_TEST_EXCLUDE_CMD)
 else
-VSCODE_TEST = $(VSCODE_TEST_CMD)
 VSCODE_TEST_EXCLUDE = $(VSCODE_TEST_EXCLUDE_CMD)
 endif
 
@@ -55,9 +52,9 @@ build:
 
 ## test: Fail-fast tests + coverage + threshold enforcement ([TEST-RULES]).
 test: build
-	@echo "==> Testing (fail-fast + coverage + threshold)..."
+	@echo "==> Testing (excluding @exclude-ci, fail-fast + coverage + threshold)..."
 	npm run test:unit
-	$(VSCODE_TEST)
+	$(VSCODE_TEST_EXCLUDE)
 	$(MAKE) _coverage_check
 
 ## lint: Run all linters/analyzers (read-only). Does NOT format.
@@ -97,12 +94,8 @@ _coverage_check:
 package: build
 	npx vsce package
 
-## test-exclude-ci: Run tests EXCLUDING those tagged @exclude-ci (fail-fast + coverage + threshold)
-test-exclude-ci: build
-	@echo "==> Testing (excluding @exclude-ci, fail-fast + coverage + threshold)..."
-	npm run test:unit
-	$(VSCODE_TEST_EXCLUDE)
-	$(MAKE) _coverage_check
+## test-exclude-ci: Alias for `test`; kept for existing CI workflows.
+test-exclude-ci: test
 
 ## reinstall: Full clean rebuild — uninstall extension, wipe artifacts + VSIX + node_modules, reinstall deps, package, install
 reinstall:
@@ -150,5 +143,5 @@ help:
 	@echo ""
 	@echo "Repo-specific:"
 	@echo "  package          - Build VSIX package"
-	@echo "  test-exclude-ci  - Run tests excluding those tagged @exclude-ci"
+	@echo "  test-exclude-ci  - Alias for test"
 	@echo "  reinstall        - Full clean: uninstall, wipe everything, rebuild, package, install VSIX"
