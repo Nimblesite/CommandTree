@@ -430,7 +430,9 @@
     "table": {
       "ajv": "^8.18.0"
     },
-    "brace-expansion": "^2.0.2",
+    "@vscode/vsce": {
+      "minimatch": "^3.1.5"
+    },
     "diff": "^9.0.0",
     "lodash": "^4.18.1",
     "markdown-it": "^14.1.1",
