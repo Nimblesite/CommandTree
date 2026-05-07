@@ -14,10 +14,7 @@ import { syncTagsFromConfig } from "./tags/tagSync";
 import { setupFileWatchers } from "./watchers";
 import { PrivateTaskDecorationProvider } from "./tree/PrivateTaskDecorationProvider";
 import { appState } from "./state";
-import {
-  registerDiscoveredCommands,
-  syncAndSummarise,
-} from "./summaryOrchestration";
+import { registerDiscoveredCommands, syncAndSummarise } from "./summaryOrchestration";
 import type { SummaryDeps } from "./summaryOrchestration";
 
 const MAKE_EXECUTABLE_COMMAND = "commandtree.makeExecutable";
