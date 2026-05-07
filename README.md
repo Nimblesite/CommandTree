@@ -1,6 +1,6 @@
 # CommandTree
 
-**One sidebar. Every command. AI-powered.**
+**One sidebar. Every command.**
 
 **[commandtree.dev](https://commandtree.dev/)**
 
@@ -10,15 +10,12 @@
 
 CommandTree scans your project and surfaces all runnable commands across 22 tool types in a single tree view. Filter by tag, and run in terminal or debugger.
 
-## AI Summaries (powered by GitHub Copilot)
+## AI Summaries — temporarily removed
 
-When [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) is installed, CommandTree automatically generates plain-language summaries of every discovered command. Hover over any command to see what it does, without reading the script. Commands that perform dangerous operations (like `rm -rf` or force-push) are flagged with a security warning.
-
-Summaries are stored locally and only regenerate when the underlying script changes.
+The Copilot-powered AI summary feature has been **temporarily removed** in 0.11.0 while a safer rollout is designed (see [issue #20](https://github.com/Nimblesite/CommandTree/issues/20)). It will return once the extension can guarantee request volume is bounded, premium models are not used silently, and the user is asked before any Copilot quota is spent.
 
 ## Features
 
-- **AI Summaries** - GitHub Copilot describes each command in plain language, with security warnings for dangerous operations
 - **Auto-discovery** - 22 command types including shell scripts, npm, Make, Python, PowerShell, Gradle, Cargo, Maven, Docker Compose, .NET, C# Script, F# Script, Mise, and more
 - **Quick Launch** - Pin frequently-used commands to a dedicated panel at the top
 - **Tagging** - Right-click any command to add or remove tags
@@ -80,7 +77,6 @@ Open a workspace and the CommandTree panel appears in the sidebar. All discovere
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| `commandtree.enableAiSummaries` | Copilot-powered plain-language summaries and security warnings | `true` |
 | `commandtree.excludePatterns` | Glob patterns to exclude from discovery | `**/node_modules/**`, `**/.git/**`, etc. |
 | `commandtree.sortOrder` | Sort commands by `folder`, `name`, or `type` | `folder` |
 

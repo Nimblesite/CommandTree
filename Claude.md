@@ -10,7 +10,7 @@
 
 ## Project Overview
 
-CommandTree is a VS Code extension that discovers and organizes runnable tasks (npm scripts, Makefiles, shell scripts, launch configs, etc.) into a unified tree view sidebar. It supports tagging, quick launch, AI-generated summaries, and 20+ task discovery providers.
+CommandTree is a VS Code extension that discovers and organizes runnable tasks (npm scripts, Makefiles, shell scripts, launch configs, etc.) into a unified tree view sidebar. It supports tagging, quick launch, and 20+ task discovery providers. (Copilot-powered AI summaries were temporarily removed in 0.11.0 — see issue #20.)
 
 **Primary language(s):** TypeScript
 **Build command:** `make ci`

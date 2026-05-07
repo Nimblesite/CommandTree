@@ -1,10 +1,8 @@
 /**
  * Exercises the summary + security-warning rendering branches in the tree:
  * createCommandNode label prefix, buildTooltip warning/summary sections,
- * and CommandTreeProvider.attachSummaries wiring.
- *
- * A real AI pipeline only runs with Copilot auth (excluded from CI), so this
- * test seeds the SQLite summary row directly via the DB's public API.
+ * and CommandTreeProvider.attachSummaries wiring. Seeds the summary row
+ * directly via the DB's public API — AI generation has been removed (#20).
  */
 
 import * as assert from "assert";

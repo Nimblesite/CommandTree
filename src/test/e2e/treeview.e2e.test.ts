@@ -14,7 +14,6 @@ import {
   getCommandTreeProvider,
   getLabelString,
   collectLeafItems,
-  collectLeafTasks,
   refreshTasks,
   writeFile,
   deleteFile,
@@ -229,23 +228,6 @@ suite("TreeView E2E Tests", () => {
         `Each make target must navigate to its own line — got ${JSON.stringify(lines)} (all same = broken)`
       );
       assert.ok(!lines.every((l) => l === 0), "Make targets must NOT all open at line 0 — line navigation is broken");
-    });
-  });
-
-  suite("AI Summaries", () => {
-    test("@exclude-ci Copilot summarisation produces summaries for discovered tasks", async function () {
-      this.timeout(15000);
-      const provider = getCommandTreeProvider();
-      // AI summaries: extension activation triggers summarisation via Copilot.
-      // If Copilot auth fails (GitHubLoginFailed), tasks will have no summaries.
-      // This MUST fail if the integration is broken.
-      const allTasks = await collectLeafTasks(provider);
-      const withSummary = allTasks.filter((t) => t.summary !== undefined && t.summary !== "");
-      assert.ok(
-        withSummary.length > 0,
-        `Copilot summarisation must produce summaries — got 0 out of ${allTasks.length} tasks. ` +
-          "Check for GitHubLoginFailed errors above."
-      );
     });
   });
 
