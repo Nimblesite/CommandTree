@@ -10,15 +10,12 @@ import { TaskRunner } from "./runners/TaskRunner";
 import { QuickTasksProvider } from "./QuickTasksProvider";
 import { logger } from "./utils/logger";
 import { initDb, disposeDb } from "./db/lifecycle";
-import { forceSelectModel } from "./semantic/summariser";
 import { syncTagsFromConfig } from "./tags/tagSync";
 import { setupFileWatchers } from "./watchers";
 import { PrivateTaskDecorationProvider } from "./tree/PrivateTaskDecorationProvider";
 import { appState } from "./state";
 import {
-  initAiSummaries,
   registerDiscoveredCommands,
-  runSummarisation,
   syncAndSummarise,
 } from "./summaryOrchestration";
 import type { SummaryDeps } from "./summaryOrchestration";
@@ -87,15 +84,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<Extens
 }
 
 function runBackgroundStartup(workspaceRoot: string): void {
-  initialDiscovery(workspaceRoot)
-    .then(() => {
-      initAiSummaries(getSummaryDeps(workspaceRoot));
-    })
-    .catch((e: unknown) => {
-      logger.error("Initial discovery failed", {
-        error: e instanceof Error ? e.message : String(e),
-      });
+  initialDiscovery(workspaceRoot).catch((e: unknown) => {
+    logger.error("Initial discovery failed", {
+      error: e instanceof Error ? e.message : String(e),
     });
+  });
 }
 
 async function initDatabaseSafe(workspaceRoot: string): Promise<void> {
@@ -201,24 +194,6 @@ function registerFilterCommands(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("commandtree.clearFilter", () => {
       getTreeProvider().clearFilters();
       updateFilterContext();
-    }),
-    vscode.commands.registerCommand("commandtree.generateSummaries", async () => {
-      const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-      if (workspaceRoot !== undefined) {
-        await runSummarisation(getSummaryDeps(workspaceRoot));
-      }
-    }),
-    vscode.commands.registerCommand("commandtree.selectModel", async () => {
-      const result = await forceSelectModel();
-      if (result.ok) {
-        vscode.window.showInformationMessage(`CommandTree: AI model set to ${result.value}`);
-        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (workspaceRoot !== undefined) {
-          await runSummarisation(getSummaryDeps(workspaceRoot));
-        }
-      } else {
-        vscode.window.showWarningMessage(`CommandTree: ${result.error}`);
-      }
     })
   );
 }
