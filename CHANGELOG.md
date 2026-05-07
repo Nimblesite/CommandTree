@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.11.0
+
+### Removed
+
+- **AI Summary feature temporarily removed** — the Copilot-powered AI summary generation has been fully removed pending a safer rollout (see [issue #20](https://github.com/Nimblesite/CommandTree/issues/20)). Reason: the previous activation path could silently fan out one Copilot request per discovered command on install and on every script edit, picking the first available model (often a premium one), which could consume a large share of a user's Copilot quota without warning. The feature will return once request volume is bounded, premium models are gated behind explicit consent, and the user is asked before any Copilot quota is spent.
+- `commandtree.enableAiSummaries` and `commandtree.aiModel` settings (no longer wired)
+- `commandtree.generateSummaries` and `commandtree.selectModel` commands (no longer wired)
+- All Copilot integration code (`semantic/summariser.ts`, `semantic/modelSelection.ts`) and the AI portions of `semantic/summaryPipeline.ts` and `summaryOrchestration.ts`
+
+### Notes
+
+- Tooltips still render any summaries already stored in the local SQLite DB; only generation is removed
+- Command discovery, registration, tagging, Quick Launch, and execution are unchanged
+
 ## 0.9.0
 
 ### Changed
