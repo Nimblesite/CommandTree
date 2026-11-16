@@ -81,3 +81,7 @@ build/
 .venv/
 website/_site/
 test-results/
+
+.deslop-cache/
+
+.deslop
